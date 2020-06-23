@@ -11,7 +11,6 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
-#include "../TunC/include/TunC.h"
 #import "include/TunC.h"
 #import "include/TUN.h"
 
@@ -20,11 +19,6 @@
 + (int)connectControl: (int) socket
 {
     return connectControl(socket);
-}
-
-+ (int)nameOption
-{
-    return getNameOption();
 }
 
 + (BOOL)setAddress: (NSString *) interfaceName withAddress: (NSString *) addressString

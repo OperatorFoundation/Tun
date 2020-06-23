@@ -39,11 +39,6 @@ int connectControl(int socket)
     return connectResult;
 }
 
-int getNameOption(void)
-{
-    return UTUN_OPT_IFNAME;
-}
-
 int setSocketNonBlocking(int socket)
 {
     int currentFlags = fcntl(socket, F_GETFL);

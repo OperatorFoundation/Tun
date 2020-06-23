@@ -19,5 +19,4 @@
 
 /// Get the identifier for the UTUN interface.
 int connectControl(int socket);
-int getNameOption(void);
 int setSocketNonBlocking(int socket);
