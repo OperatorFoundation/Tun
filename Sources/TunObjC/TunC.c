@@ -38,21 +38,3 @@ int connectControl(int socket)
     
     return connectResult;
 }
-
-int setSocketNonBlocking(int socket)
-{
-    int currentFlags = fcntl(socket, F_GETFL);
-    if (currentFlags < 0) {
-        printf("fcntl(F_GETFL) failed: %s\n", strerror(errno));
-        return 0;
-    }
-
-    currentFlags |= O_NONBLOCK;
-
-    if (fcntl(socket, F_SETFL, currentFlags) < 0) {
-        printf("fcntl(F_SETFL) failed: %s\n", strerror(errno));
-        return 0;
-    }
-
-    return 1;
-}

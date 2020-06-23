@@ -97,7 +97,7 @@ public class TunDevice
     
     func startTunnel(fd: Int32)
     {
-        if !TUN.setNonBlocking(fd)
+        if !setSocketNonBlocking(socket: fd)
         {
             return
         }
@@ -248,5 +248,27 @@ public class TunDevice
         }
 
         return kernelControlInfo.ctl_id;
+    }
+    
+    func setSocketNonBlocking(socket: Int32) -> Bool
+    {
+        let currentFlags = fcntl(socket, F_GETFL)
+        guard currentFlags >= 0 else
+        {
+            print("fcntl(F_GETFL) failed:", strerror(errno) ?? 0)
+            
+            return false
+        }
+
+        let newFlags = currentFlags | O_NONBLOCK
+
+        guard fcntl(socket, F_SETFL, newFlags) >= 0 else
+        {
+            print("fcntl(F_SETFL) failed: %s\n", strerror(errno) ?? 0);
+            
+            return false
+        }
+
+        return true
     }
 }

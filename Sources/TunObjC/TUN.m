@@ -63,9 +63,4 @@
     return YES;
 }
 
-+ (BOOL)setNonBlocking: (int) socket
-{
-    return setSocketNonBlocking(socket);
-}
-
 @end
