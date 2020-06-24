@@ -10,8 +10,11 @@ import TunObjC
 import Datable
 import Darwin.C
 
-// The include file for this constant does not appear to be available from Swift.
+// The include files that define these constant do not appear to be available from Swift.
+// It would, of course, be better to find the correct way to import these from C.
 let CTLIOCGINFO: UInt = 3227799043
+let UTUN_OPT_IFNAME: Int32 = 2
+let UTUN_CONTROL_NAME = "com.apple.net.utun_control"
 
 public class TunDevice
 {
@@ -310,4 +313,87 @@ public class TunDevice
         return connectResult;
     }
 
+    func setAddress(interfaceName: String, addressString: String) -> Bool
+    {
+        var address: in_addr
+        
+        let cstring = addressString.cString(using: .utf8)
+                
+        guard inet_pton(AF_INET, cstring, &address) == 1 else
+        {
+            return false
+        }
+
+        guard let interfaceNameArray = interfaceName.data.array(of: Int8.self) else
+        {
+            return false
+        }
+        var infra_name: [Int8] = paddedArray(source: interfaceNameArray, targetSize: 16, padValue: 0)
+        
+        guard let addressArray = addressString.data.array(of: Int8.self) else
+        {
+            return false
+        }
+        
+        var sin_addr: [Int8] = paddedArray(source: addressArray, targetSize: 14, padValue: 0)
+        
+        let socketDescriptor = socket(AF_INET, SOCK_DGRAM, 0)
+
+        guard socketDescriptor > 0 else
+        {
+            print("Failed to create a DGRAM socket:", strerror(errno) ?? 0)
+            
+            return false
+        }
+        
+        let sockaddr_in_size = MemoryLayout<sockaddr_in>.stride
+        
+        let interfaceAliasRequest = ifaliasreq(
+            ifra_name: (infra_name[0], infra_name[1], infra_name[2], infra_name[3], infra_name[4], infra_name[5], infra_name[6], infra_name[7], infra_name[8], infra_name[9], infra_name[10], infra_name[11], infra_name[12], infra_name[13], infra_name[14], infra_name[15]),
+            ifra_addr: sockaddr(
+                sa_len: __uint8_t(sockaddr_in_size),
+                sa_family: sa_family_t(AF_INET),
+                sa_data: (sin_addr[0], sin_addr[1], sin_addr[2], sin_addr[3], sin_addr[4], sin_addr[5], sin_addr[6], sin_addr[7], sin_addr[8], sin_addr[9], sin_addr[10], sin_addr[11], sin_addr[12], sin_addr[13])
+            ),
+            ifra_broadaddr: sockaddr(
+                sa_len: __uint8_t(sockaddr_in_size),
+                sa_family: sa_family_t(AF_INET),
+                sa_data: (sin_addr[0], sin_addr[1], sin_addr[2], sin_addr[3], sin_addr[4], sin_addr[5], sin_addr[6], sin_addr[7], sin_addr[8], sin_addr[9], sin_addr[10], sin_addr[11], sin_addr[12], sin_addr[13])
+            ),
+            ifra_mask: sockaddr(
+                sa_len: __uint8_t(sockaddr_in_size),
+                sa_family: sa_family_t(AF_INET),
+                sa_data: (255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+            )
+        )
+        
+        guard ioctl(socketDescriptor, SIOCAIFADDR, &interfaceAliasRequest) > 0 else
+        {
+            print("Failed to set the address of the interface")
+            close(socketDescriptor)
+            return false
+        }
+
+        close(socketDescriptor)
+        
+//            memcpy(&((struct sockaddr_in *)&interfaceAliasRequest.ifra_broadaddr)->sin_addr, &address, sizeof(address));
+        
+        return true
+    }
+    
+    func paddedArray<T>(source: [T], targetSize: Int, padValue: T) -> [T]
+    {
+        var result: [T] = []
+        for item in source
+        {
+            result.append(item)
+        }
+        
+        for _ in result.count..<targetSize
+        {
+            result.append(padValue)
+        }
+        
+        return result
+    }
 }

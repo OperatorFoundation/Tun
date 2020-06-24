@@ -3,6 +3,10 @@
 #include <net/if_dl.h>
 #include <sys/kern_control.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <net/route.h>
 #include <errno.h>
 #include <strings.h>
 #include <stdio.h>
+#include <sys/sockio.h>
