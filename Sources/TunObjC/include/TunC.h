@@ -18,5 +18,4 @@
 #include <fcntl.h>
 
 /// Get the identifier for the UTUN interface.
-int connectControl(int socket);
 int setSocketNonBlocking(int socket);

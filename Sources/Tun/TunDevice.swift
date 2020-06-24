@@ -61,7 +61,7 @@ public class TunDevice
             return nil
         }
         
-        let result = TunObjC.connectControl(fd)
+        let result = connectControl(socket: fd)
         guard result == 0 else
         {
             print("Failed to connect to TUN control socket: \(result)")
@@ -271,4 +271,43 @@ public class TunDevice
 
         return true
     }
+    
+    func connectControl(socket: Int32) -> Int32?
+    {
+        guard let controlIdentifier = getIdentifier(socket: socket) else
+        {
+            return nil
+        }
+        
+        guard controlIdentifier > 0 else
+        {
+            return nil
+        }
+
+        let size = MemoryLayout<sockaddr_ctl>.stride
+        
+        var control: sockaddr_ctl = sockaddr_ctl(
+            sc_len: UInt8(size),
+            sc_family: UInt8(AF_SYSTEM),
+            ss_sysaddr: UInt16(AF_SYS_CONTROL),
+            sc_id: controlIdentifier,
+            sc_unit: 0,
+            sc_reserved: (0, 0, 0, 0, 0)
+        )
+
+        let connectResult = withUnsafeMutablePointer(to: &control)
+        {
+            controlPointer -> Int32 in
+            
+            return controlPointer.withMemoryRebound(to: sockaddr.self, capacity: 1)
+            {
+                sockaddrPointer -> Int32 in
+                
+                return connect(socket, sockaddrPointer, socklen_t(size))
+            }
+        }
+        
+        return connectResult;
+    }
+
 }

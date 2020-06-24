@@ -16,11 +16,6 @@
 
 @implementation TUN
 
-+ (int)connectControl: (int) socket
-{
-    return connectControl(socket);
-}
-
 + (BOOL)setAddress: (NSString *) interfaceName withAddress: (NSString *) addressString
 {
     struct in_addr address;
