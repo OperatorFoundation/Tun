@@ -433,7 +433,7 @@ public class TunDevice
             ifra_mask: sockaddr(
                 sa_len: __uint8_t(sockaddr_in_size),
                 sa_family: sa_family_t(AF_INET),
-                sa_data: (255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+                sa_data: (Int8(bitPattern: 255), Int8(bitPattern: 255), Int8(bitPattern: 255), Int8(bitPattern: 255), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
             )
         )
         
