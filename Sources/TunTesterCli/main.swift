@@ -2,9 +2,13 @@ import Foundation
 
 import Tun
 
+
+print("Sleeping 2 seconds to allow debugger to attach to process...")
+sleep(2)
+
 print("Hello, Operator.")
 
-var address = "10.0.0.1"
+var address = "10.2.0.1"
 
 if CommandLine.arguments.count > 0 {
     address = CommandLine.arguments[0]
@@ -22,10 +26,11 @@ if let tun = TunDevice(address: address, reader: reader) {
 
     while true {
         guard let result = tun.read(packetSize: 1024) else {
+            print("no result of tun.read")
             break
         }
+        print("result of read: \(result)")
         
-        print(result)
     }
 }
 
