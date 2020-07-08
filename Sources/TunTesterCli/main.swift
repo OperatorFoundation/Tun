@@ -10,9 +10,10 @@ print("Hello, Operator.")
 
 var address = "10.2.0.1"
 
-if CommandLine.arguments.count > 0 {
-    address = CommandLine.arguments[0]
+if CommandLine.arguments.count > 1 {
+    address = CommandLine.arguments[1]
 }
+print("Address: \(address)")
 
 let reader: (Data, UInt32) -> Void = {
     data, protocolNumber in
@@ -26,11 +27,10 @@ if let tun = TunDevice(address: address, reader: reader) {
 
     while true {
         guard let result = tun.read(packetSize: 1024) else {
-            print("no result of tun.read")
+            print("No result of tun.read")
             break
         }
-        print("result of read: \(result)")
-        
+        print("Result of read: \(result)")
     }
 }
 
