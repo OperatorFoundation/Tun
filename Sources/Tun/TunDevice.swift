@@ -248,7 +248,8 @@ public class TunDevice
     {
         while true
         {
-            guard let (data, protocolNumber) = self.read(packetSize: 1) else
+            //FIX packet size is fixed!
+            guard let (data, protocolNumber) = self.read(packetSize: 1024) else
             {
                 return
             }
