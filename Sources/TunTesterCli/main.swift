@@ -33,7 +33,7 @@ if let tun = TunDevice(address: address, reader: reader) {
 
     while true {
         print(".")
-        guard let result = tun.read(packetSize: 1024) else {
+        guard let result = tun.read(packetSize: 1500) else {
             print("No result of tun.read")
             break
         }

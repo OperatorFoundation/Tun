@@ -175,43 +175,45 @@ public class TunDevice
             return
         }
         
-        guard let newSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: DispatchQueue.main) as? DispatchSource else
-        {
-            return
-        }
-        
-        newSource.setCancelHandler
-        {
-            close(fd)
-            return
-        }
-
-        newSource.setEventHandler
-        {
-            self.handleRead()
-        }
-
-        newSource.resume()
-        
-        maybeSource = newSource
+//        guard let newSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: DispatchQueue.main) as? DispatchSource else
+//        {
+//            return
+//        }
+//
+//        newSource.setCancelHandler
+//        {
+//            close(fd)
+//            return
+//        }
+//
+//        newSource.setEventHandler
+//        {
+//            self.handleRead()
+//        }
+//
+//        newSource.resume()
+//
+//        maybeSource = newSource
     }
     
     public func writeV4(_ packet: Data)
     {
+        guard let tun = maybeTun else
+        {
+            return
+        }
+        
         let protocolNumber = AF_INET
         DatableConfig.endianess = .big
         var protocolNumberBuffer = protocolNumber.data
         var buffer = Data(packet)
+                    
         var iovecList =
         [
             iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
             iovec(iov_base: &buffer, iov_len: packet.count)
         ]
-        
-        guard let tun = maybeTun else {
-            return
-        }
-        
+                
         let writeCount = writev(tun, &iovecList, Int32(iovecList.count))
         if writeCount < 0
         {
@@ -249,7 +251,7 @@ public class TunDevice
         while true
         {
             //FIX packet size is fixed!
-            guard let (data, protocolNumber) = self.read(packetSize: 1024) else
+            guard let (data, protocolNumber) = self.read(packetSize: 1500) else
             {
                 return
             }
