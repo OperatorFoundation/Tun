@@ -10,13 +10,12 @@ import Datable
 import Glibc
 import TunC
 
-
-
 // The include files that define these constants do not appear to be available from Swift.
 // It would, of course, be better to find the correct way to import these from C.
 let CTLIOCGINFO: UInt = 3227799043
 let UTUN_OPT_IFNAME: Int32 = 2
 let UTUN_CONTROL_NAME = "com.apple.net.utun_control"
+let X = TunC_X()
 
 //the following are from <sys/sockio.h>
 let SIOCSHIWAT: UInt = 2147775232
@@ -99,6 +98,8 @@ public class TunDevice
     public init?(address: String, reader: @escaping (Data, UInt32) -> Void)
     {
         self.reader = reader
+        
+        TunC_function()
         
         guard let fd = createInterface() else
         {

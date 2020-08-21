@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <linux/if_tun.h>
+//#include <linux/if_tun.h>
 #include <sys/ioctl.h>
 
 #include <stdint.h>
@@ -17,3 +17,5 @@
 #include <strings.h>
 #include <stdio.h>
 
+void TunC_function();
+int TunC_X();
