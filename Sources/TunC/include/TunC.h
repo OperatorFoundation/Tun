@@ -1,7 +1,14 @@
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <linux/if_tun.h>
+#include <sys/ioctl.h>
+
 #include <stdint.h>
-#include <net/if_utun.h>
-#include <net/if_dl.h>
-#include <sys/kern_control.h>
+
+
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -9,4 +16,4 @@
 #include <errno.h>
 #include <strings.h>
 #include <stdio.h>
-#include <sys/sockio.h>
+

@@ -7,7 +7,10 @@
 
 import Foundation
 import Datable
-import Darwin.C
+import Glibc
+import TunC
+
+
 
 // The include files that define these constants do not appear to be available from Swift.
 // It would, of course, be better to find the correct way to import these from C.
@@ -106,30 +109,31 @@ public class TunDevice
         
         maybeTun = fd
         
-        guard let ifname = getInterfaceName(fd: fd) else
-        {
-            return nil
-        }
+        // guard let ifname = getInterfaceName(fd: fd) else
+        // {
+        //     return nil
+        // }
         
-        print("TUN interface name \(ifname)")
+        // print("TUN interface name \(ifname)")
         
-        maybeName = ifname
+        // maybeName = ifname
         
-        guard setAddress(interfaceName: ifname, addressString: address) else
-        {//swift
-            return nil
-        }
+        // guard setAddress(interfaceName: ifname, addressString: address) else
+        // {//swift
+        //     return nil
+        // }
         
 
 
         
-        startTunnel(fd: fd)
+        //startTunnel(fd: fd)
     }
 
     /// Create a UTUN interface.
     func createInterface() -> Int32?
     {
-        let fd = socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL)
+        let fd = open("/dev/net/tun", O_RDWR)
+        //socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL)
         guard fd >= 0 else
         {
             print("Failed to open TUN socket")
@@ -143,57 +147,59 @@ public class TunDevice
             close(fd)
             return nil
         }
+
+
         
         return fd
     }
     
-    /// Get the name of a UTUN interface the associated socket.
-    func getInterfaceName(fd: Int32) -> String?
-    {
-        let length = Int(IFNAMSIZ)
-        var buffer = [Int8](repeating: 0, count: length)
-        var bufferSize: socklen_t = socklen_t(length)
-        let result = getsockopt(fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, &buffer, &bufferSize)
+    // /// Get the name of a UTUN interface the associated socket.
+    // func getInterfaceName(fd: Int32) -> String?
+    // {
+    //     let length = Int(IFNAMSIZ)
+    //     var buffer = [Int8](repeating: 0, count: length)
+    //     var bufferSize: socklen_t = socklen_t(length)
+    //     let result = getsockopt(fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, &buffer, &bufferSize)
         
-        guard result >= 0 else
-        {
-            let errorString = String(cString: strerror(errno))
-            print("getsockopt failed while getting the utun interface name: \(errorString)")
-            return nil
-        }
+    //     guard result >= 0 else
+    //     {
+    //         let errorString = String(cString: strerror(errno))
+    //         print("getsockopt failed while getting the utun interface name: \(errorString)")
+    //         return nil
+    //     }
         
-        return String(cString: &buffer)
-    }
+    //     return String(cString: &buffer)
+    // }
     
 
     
-    func startTunnel(fd: Int32)
-    {
-        if !setSocketNonBlocking(socket: fd)
-        {
-            return
-        }
+//     func startTunnel(fd: Int32)
+//     {
+//         if !setSocketNonBlocking(socket: fd)
+//         {
+//             return
+//         }
         
-//        guard let newSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: DispatchQueue.main) as? DispatchSource else
-//        {
-//            return
-//        }
-//
-//        newSource.setCancelHandler
-//        {
-//            close(fd)
-//            return
-//        }
-//
-//        newSource.setEventHandler
-//        {
-//            self.handleRead()
-//        }
-//
-//        newSource.resume()
-//
-//        maybeSource = newSource
-    }
+// //        guard let newSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: DispatchQueue.main) as? DispatchSource else
+// //        {
+// //            return
+// //        }
+// //
+// //        newSource.setCancelHandler
+// //        {
+// //            close(fd)
+// //            return
+// //        }
+// //
+// //        newSource.setEventHandler
+// //        {
+// //            self.handleRead()
+// //        }
+// //
+// //        newSource.resume()
+// //
+// //        maybeSource = newSource
+//     }
     
     public func writeV4(_ packet: Data)
     {
@@ -221,29 +227,29 @@ public class TunDevice
         }
     }
 
-    public func writeV6(_ packet: Data)
-    {
-        let protocolNumber = AF_INET6
-        DatableConfig.endianess = .big
-        var protocolNumberBuffer = protocolNumber.data
-        var buffer = Data(packet)
-        var iovecList =
-            [
-                iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
-                iovec(iov_base: &buffer, iov_len: packet.count)
-        ]
+    // public func writeV6(_ packet: Data)
+    // {
+    //     let protocolNumber = AF_INET6
+    //     DatableConfig.endianess = .big
+    //     var protocolNumberBuffer = protocolNumber.data
+    //     var buffer = Data(packet)
+    //     var iovecList =
+    //         [
+    //             iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
+    //             iovec(iov_base: &buffer, iov_len: packet.count)
+    //     ]
         
-        guard let tun = maybeTun else {
-            return
-        }
+    //     guard let tun = maybeTun else {
+    //         return
+    //     }
         
-        let writeCount = writev(tun, &iovecList, Int32(iovecList.count))
-        if writeCount < 0
-        {
-            let errorString = String(cString: strerror(errno))
-            print("Got an error while writing to utun: \(errorString)")
-        }
-    }
+    //     let writeCount = writev(tun, &iovecList, Int32(iovecList.count))
+    //     if writeCount < 0
+    //     {
+    //         let errorString = String(cString: strerror(errno))
+    //         print("Got an error while writing to utun: \(errorString)")
+    //     }
+    // }
     
     func handleRead()
     {
@@ -311,164 +317,171 @@ public class TunDevice
         while error == EAGAIN
     }
         
-    func getIdentifier(socket: Int32) -> UInt32?
-    {
-        var n = UTUN_CONTROL_NAME.array(of: Int8.self)!
+    // func getIdentifier(socket: Int32) -> UInt32?
+    // {
+    //     var n = UTUN_CONTROL_NAME.array(of: Int8.self)!
         
-        //pad out n
-        for _ in 1...(96 - n.count)
-        {
-            n.append(0)
-        }
+    //     //pad out n
+    //     for _ in 1...(96 - n.count)
+    //     {
+    //         n.append(0)
+    //     }
 
         
-        var kernelControlInfo: ctl_info = ctl_info(ctl_id: 0, ctl_name: (n[0], n[1], n[2], n[3], n[4], n[5], n[6], n[7], n[8], n[9], n[10], n[11], n[12], n[13], n[14], n[15], n[16], n[17], n[18], n[19], n[20], n[21], n[22], n[23], n[24], n[25], n[26], n[27], n[28], n[29], n[30], n[31], n[32], n[33], n[34], n[35], n[36], n[37], n[38], n[39], n[40], n[41], n[42], n[43], n[44], n[45], n[46], n[47], n[48], n[49], n[50], n[51], n[52], n[53], n[54], n[55], n[56], n[57], n[58], n[59], n[60], n[61], n[62], n[63], n[64], n[65], n[66], n[67], n[68], n[69], n[70], n[71], n[72], n[73], n[74], n[75], n[76], n[77], n[78], n[79], n[80], n[81], n[82], n[83], n[84], n[85], n[86], n[87], n[88], n[89], n[90], n[91], n[92], n[93], n[94], n[95]))
+    //     var kernelControlInfo: ctl_info = ctl_info(ctl_id: 0, ctl_name: (n[0], n[1], n[2], n[3], n[4], n[5], n[6], n[7], n[8], n[9], n[10], n[11], n[12], n[13], n[14], n[15], n[16], n[17], n[18], n[19], n[20], n[21], n[22], n[23], n[24], n[25], n[26], n[27], n[28], n[29], n[30], n[31], n[32], n[33], n[34], n[35], n[36], n[37], n[38], n[39], n[40], n[41], n[42], n[43], n[44], n[45], n[46], n[47], n[48], n[49], n[50], n[51], n[52], n[53], n[54], n[55], n[56], n[57], n[58], n[59], n[60], n[61], n[62], n[63], n[64], n[65], n[66], n[67], n[68], n[69], n[70], n[71], n[72], n[73], n[74], n[75], n[76], n[77], n[78], n[79], n[80], n[81], n[82], n[83], n[84], n[85], n[86], n[87], n[88], n[89], n[90], n[91], n[92], n[93], n[94], n[95]))
 
-        guard ioctl(socket, CTLIOCGINFO, &kernelControlInfo) != -1 else
-        {
-            print("ioctl failed on kernel control socket:", strerror(errno) ?? 0);
-            return nil;
-        }
+    //     guard ioctl(socket, CTLIOCGINFO, &kernelControlInfo) != -1 else
+    //     {
+    //         print("ioctl failed on kernel control socket:", strerror(errno) ?? 0);
+    //         return nil;
+    //     }
 
-        return kernelControlInfo.ctl_id;
-    }
+    //     return kernelControlInfo.ctl_id;
+    // }
     
-    func setSocketNonBlocking(socket: Int32) -> Bool
-    {
-        let currentFlags = fcntl(socket, F_GETFL)
-        guard currentFlags >= 0 else
-        {
-            print("fcntl(F_GETFL) failed:", strerror(errno) ?? 0)
+    // func setSocketNonBlocking(socket: Int32) -> Bool
+    // {
+    //     let currentFlags = fcntl(socket, F_GETFL)
+    //     guard currentFlags >= 0 else
+    //     {
+    //         print("fcntl(F_GETFL) failed:", strerror(errno) ?? 0)
             
-            return false
-        }
+    //         return false
+    //     }
 
-        let newFlags = currentFlags | O_NONBLOCK
+    //     let newFlags = currentFlags | O_NONBLOCK
 
-        guard fcntl(socket, F_SETFL, newFlags) >= 0 else
-        {
-            print("fcntl(F_SETFL) failed: %s\n", strerror(errno) ?? 0);
+    //     guard fcntl(socket, F_SETFL, newFlags) >= 0 else
+    //     {
+    //         print("fcntl(F_SETFL) failed: %s\n", strerror(errno) ?? 0);
             
-            return false
-        }
+    //         return false
+    //     }
 
-        return true
-    }
+    //     return true
+    // }
     
     func connectControl(socket: Int32) -> Int32?
     {
-        guard let controlIdentifier = getIdentifier(socket: socket) else
-        {
-            return nil
-        }
-        
-        guard controlIdentifier > 0 else
-        {
-            return nil
-        }
+        var flags = ifreq()
+        //ioctl()
+        flags.ifr_flags = IFF_TUN | IFF_NO_PI
 
-        let size = MemoryLayout<sockaddr_ctl>.stride
-        
-        var control: sockaddr_ctl = sockaddr_ctl(
-            sc_len: UInt8(size),
-            sc_family: UInt8(AF_SYSTEM),
-            ss_sysaddr: UInt16(AF_SYS_CONTROL),
-            sc_id: controlIdentifier,
-            sc_unit: 0,
-            sc_reserved: (0, 0, 0, 0, 0)
-        )
+        ioctl(socket, TUNSETIFF, &flags)
 
-        let connectResult = withUnsafeMutablePointer(to: &control)
-        {
-            controlPointer -> Int32 in
+
+        // guard let controlIdentifier = getIdentifier(socket: socket) else
+        // {
+        //     return nil
+        // }
+        
+        // guard controlIdentifier > 0 else
+        // {
+        //     return nil
+        // }
+
+        // let size = MemoryLayout<sockaddr_ctl>.stride
+        
+        // var control: sockaddr_ctl = sockaddr_ctl(
+        //     sc_len: UInt8(size),
+        //     sc_family: UInt8(AF_SYSTEM),
+        //     ss_sysaddr: UInt16(AF_SYS_CONTROL),
+        //     sc_id: controlIdentifier,
+        //     sc_unit: 0,
+        //     sc_reserved: (0, 0, 0, 0, 0)
+        // )
+
+        // let connectResult = withUnsafeMutablePointer(to: &control)
+        // {
+        //     controlPointer -> Int32 in
             
-            return controlPointer.withMemoryRebound(to: sockaddr.self, capacity: 1)
-            {
-                sockaddrPointer -> Int32 in
+        //     return controlPointer.withMemoryRebound(to: sockaddr.self, capacity: 1)
+        //     {
+        //         sockaddrPointer -> Int32 in
                 
-                return connect(socket, sockaddrPointer, socklen_t(size))
-            }
-        }
+        //         return connect(socket, sockaddrPointer, socklen_t(size))
+        //     }
+        // }
         
-        return connectResult;
+         return 0;
     }
 
-    func setAddress(interfaceName: String, addressString: String) -> Bool
-    {
-        var address = in_addr()
+//     func setAddress(interfaceName: String, addressString: String) -> Bool
+//     {
+//         var address = in_addr()
         
-        let cstring = addressString.cString(using: .utf8)
+//         let cstring = addressString.cString(using: .utf8)
                 
-        guard inet_pton(AF_INET, cstring, &address) == 1 else
-        {
-            return false
-        }
+//         guard inet_pton(AF_INET, cstring, &address) == 1 else
+//         {
+//             return false
+//         }
 
-        guard let interfaceNameArray = interfaceName.data.array(of: Int8.self) else
-        {
-            return false
-        }
-        var infra_name: [Int8] = paddedArray(source: interfaceNameArray, targetSize: 16, padValue: 0)
+//         guard let interfaceNameArray = interfaceName.data.array(of: Int8.self) else
+//         {
+//             return false
+//         }
+//         var infra_name: [Int8] = paddedArray(source: interfaceNameArray, targetSize: 16, padValue: 0)
         
-        let addressParts = addressString.split(separator: ".")
-        let sin_addr = addressParts.map({Int8($0)!})
+//         let addressParts = addressString.split(separator: ".")
+//         let sin_addr = addressParts.map({Int8($0)!})
         
         
-//        guard let addressArray = addressString.data.array(of: Int8.self) else
-//        {
-//            return false
-//        }
+// //        guard let addressArray = addressString.data.array(of: Int8.self) else
+// //        {
+// //            return false
+// //        }
         
-        //var sin_addr: [Int8] = paddedArray(source: addressBytes, targetSize: 14, padValue: 0)
+//         //var sin_addr: [Int8] = paddedArray(source: addressBytes, targetSize: 14, padValue: 0)
         
-        let socketDescriptor = socket(AF_INET, SOCK_DGRAM, 0)
+//         let socketDescriptor = socket(AF_INET, SOCK_DGRAM, 0)
 
-        guard socketDescriptor > 0 else
-        {
-            print("Failed to create a DGRAM socket:", strerror(errno) ?? 0)
+//         guard socketDescriptor > 0 else
+//         {
+//             print("Failed to create a DGRAM socket:", strerror(errno) ?? 0)
             
-            return false
-        }
-        //FIXME: calculate size correctly instead of constant
-        let sockaddr_in_size = MemoryLayout<sockaddr_in>.size
+//             return false
+//         }
+//         //FIXME: calculate size correctly instead of constant
+//         let sockaddr_in_size = MemoryLayout<sockaddr_in>.size
         
-        var interfaceAliasRequest = ifaliasreq(
-            ifra_name: (infra_name[0], infra_name[1], infra_name[2], infra_name[3], infra_name[4], infra_name[5], infra_name[6], infra_name[7], infra_name[8], infra_name[9], infra_name[10], infra_name[11], infra_name[12], infra_name[13], infra_name[14], infra_name[15]),
-            ifra_addr: sockaddr(
-                sa_len: __uint8_t(sockaddr_in_size),
-                sa_family: sa_family_t(AF_INET),
-                sa_data: (0,0, sin_addr[0], sin_addr[1], sin_addr[2], sin_addr[3], 0,0,0,0,0,0,0,0)
-            ),
-            ifra_broadaddr: sockaddr(
-                sa_len: __uint8_t(sockaddr_in_size),
-                sa_family: sa_family_t(AF_INET),
-                sa_data: (0,0, sin_addr[0], sin_addr[1], sin_addr[2], sin_addr[3], 0,0,0,0,0,0,0,0)
-            ),
-            ifra_mask: sockaddr(
-                sa_len: __uint8_t(sockaddr_in_size),
-                sa_family: sa_family_t(AF_INET),
-                sa_data: ( 0,0, Int8(bitPattern: 255), Int8(bitPattern: 255), Int8(bitPattern: 255), Int8(bitPattern: 255), 0, 0, 0, 0, 0, 0, 0, 0)
-            )
-        )
+//         var interfaceAliasRequest = ifaliasreq(
+//             ifra_name: (infra_name[0], infra_name[1], infra_name[2], infra_name[3], infra_name[4], infra_name[5], infra_name[6], infra_name[7], infra_name[8], infra_name[9], infra_name[10], infra_name[11], infra_name[12], infra_name[13], infra_name[14], infra_name[15]),
+//             ifra_addr: sockaddr(
+//                 sa_len: __uint8_t(sockaddr_in_size),
+//                 sa_family: sa_family_t(AF_INET),
+//                 sa_data: (0,0, sin_addr[0], sin_addr[1], sin_addr[2], sin_addr[3], 0,0,0,0,0,0,0,0)
+//             ),
+//             ifra_broadaddr: sockaddr(
+//                 sa_len: __uint8_t(sockaddr_in_size),
+//                 sa_family: sa_family_t(AF_INET),
+//                 sa_data: (0,0, sin_addr[0], sin_addr[1], sin_addr[2], sin_addr[3], 0,0,0,0,0,0,0,0)
+//             ),
+//             ifra_mask: sockaddr(
+//                 sa_len: __uint8_t(sockaddr_in_size),
+//                 sa_family: sa_family_t(AF_INET),
+//                 sa_data: ( 0,0, Int8(bitPattern: 255), Int8(bitPattern: 255), Int8(bitPattern: 255), Int8(bitPattern: 255), 0, 0, 0, 0, 0, 0, 0, 0)
+//             )
+//         )
         
-        let results = ioctl(socketDescriptor, SIOCAIFADDR, &interfaceAliasRequest)
+//         let results = ioctl(socketDescriptor, SIOCAIFADDR, &interfaceAliasRequest)
         
         
         
-        guard Int(results) == 0 else
-        {
-            print("Failed to set the address of the interface:\n \(results)")
+//         guard Int(results) == 0 else
+//         {
+//             print("Failed to set the address of the interface:\n \(results)")
            
-            close(socketDescriptor)
-            return false
-        }
+//             close(socketDescriptor)
+//             return false
+//         }
 
-        close(socketDescriptor)
+//         close(socketDescriptor)
         
-//            memcpy(&((struct sockaddr_in *)&interfaceAliasRequest.ifra_broadaddr)->sin_addr, &address, sizeof(address));
+// //            memcpy(&((struct sockaddr_in *)&interfaceAliasRequest.ifra_broadaddr)->sin_addr, &address, sizeof(address));
         
-        return true
-    }
+//         return true
+//     }
     
     func paddedArray(source: [Int8], targetSize: Int, padValue: Int8) -> [Int8]
     {
