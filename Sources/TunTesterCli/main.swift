@@ -8,6 +8,8 @@ sleep(2)
 
 print("Hello, Operator.")
 
+
+
 var address = "10.11.12.13"
 
 if CommandLine.arguments.count > 1 {
@@ -24,7 +26,7 @@ let reader: (Data, UInt32) -> Void = {
     print("protocolNumber: \(protocolNumber)")
     print("Number of bytes: \(data.count)")
     print("Data: ")
-    printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+    //printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 }
 
 if let tun = TunDevice(address: address, reader: reader) {

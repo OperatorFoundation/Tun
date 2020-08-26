@@ -10,82 +10,43 @@ import Datable
 import Glibc
 import TunC
 
-// The include files that define these constants do not appear to be available from Swift.
-// It would, of course, be better to find the correct way to import these from C.
-let CTLIOCGINFO: UInt = 3227799043
-let UTUN_OPT_IFNAME: Int32 = 2
-let UTUN_CONTROL_NAME = "com.apple.net.utun_control"
-let X = TunC_X()
 
-//the following are from <sys/sockio.h>
-let SIOCSHIWAT: UInt = 2147775232
-let SIOCGHIWAT: UInt = 1074033409
-let SIOCSLOWAT: UInt = 2147775234
-let SIOCGLOWAT: UInt = 1074033411
-let SIOCATMARK: UInt = 1074033415
-let SIOCSPGRP: UInt = 2147775240
-let SIOCGPGRP: UInt = 1074033417
-let SIOCSIFADDR: UInt = 2149607692
-let SIOCSIFDSTADDR: UInt = 2149607694
-let SIOCSIFFLAGS: UInt = 2149607696
-let SIOCGIFFLAGS: UInt = 3223349521
-let SIOCSIFBRDADDR: UInt = 2149607699
-let SIOCSIFNETMASK: UInt = 2149607702
-let SIOCGIFMETRIC: UInt = 3223349527
-let SIOCSIFMETRIC: UInt = 2149607704
-let SIOCDIFADDR: UInt = 2149607705
-let SIOCAIFADDR: UInt = 2151704858
-let SIOCGIFADDR: UInt = 3223349537
-let SIOCGIFDSTADDR: UInt = 3223349538
-let SIOCGIFBRDADDR: UInt = 3223349539
-let SIOCGIFNETMASK: UInt = 3223349541
-let SIOCAUTOADDR: UInt = 3223349542
-let SIOCAUTONETMASK: UInt = 2149607719
-let SIOCARPIPLL: UInt = 3223349544
-let SIOCADDMULTI: UInt = 2149607729
-let SIOCDELMULTI: UInt = 2149607730
-let SIOCGIFMTU: UInt = 3223349555
-let SIOCSIFMTU: UInt = 2149607732
-let SIOCGIFPHYS: UInt = 3223349557
-let SIOCSIFPHYS: UInt = 2149607734
-let SIOCSIFMEDIA: UInt = 3223349559
-let SIOCGIFMEDIA: UInt = 3224135992
-let SIOCSIFGENERIC: UInt = 2149607737
-let SIOCGIFGENERIC: UInt = 3223349562
-let SIOCRSLVMULTI: UInt = 3222300987
-let SIOCSIFLLADDR: UInt = 2149607740
-let SIOCGIFSTATUS: UInt = 3274795325
-let SIOCSIFPHYADDR: UInt = 2151704894
-let SIOCGIFPSRCADDR: UInt = 3223349567
-let SIOCGIFPDSTADDR: UInt = 3223349568
-let SIOCDIFPHYADDR: UInt = 2149607745
-let SIOCGIFDEVMTU: UInt = 3223349572
-let SIOCSIFALTMTU: UInt = 2149607749
-let SIOCGIFALTMTU: UInt = 3223349576
-let SIOCSIFBOND: UInt = 2149607750
-let SIOCGIFBOND: UInt = 3223349575
-let SIOCGIFXMEDIA: UInt = 3224136008
-let SIOCSIFCAP: UInt = 2149607770
-let SIOCGIFCAP: UInt = 3223349595
-let SIOCIFCREATE: UInt = 3223349624
-let SIOCIFDESTROY: UInt = 2149607801
-let SIOCIFCREATE2: UInt = 3223349626
-let SIOCSDRVSPEC: UInt = 2150132091
-let SIOCGDRVSPEC: UInt = 3223873915
-let SIOCSIFVLAN: UInt = 2149607806
-let SIOCGIFVLAN: UInt = 3223349631
-let SIOCSETVLAN: UInt = 2149607806
-let SIOCGETVLAN: UInt = 3223349631
-let SIOCGIFASYNCMAP: UInt = 3223349628
-let SIOCSIFASYNCMAP: UInt = 2149607805
-let SIOCGIFMAC: UInt = 3223349634
-let SIOCSIFMAC: UInt = 2149607811
-let SIOCSIFKPI: UInt = 2149607814
-let SIOCGIFKPI: UInt = 3223349639
-let SIOCGIFWAKEFLAGS: UInt = 3223349640
-let SIOCGIFFUNCTIONALTYPE: UInt = 3223349677
-let SIOCSIF6LOWPAN: UInt = 2149607876
-let SIOCGIF6LOWPAN: UInt = 3223349701
+//let X = TunC_X()
+
+/*
+//mac specific?
+    CTLIOCGINFO
+    UTUN_OPT_IFNAME
+    UTUN_CONTROL_NAME
+    PF_SYSTEM
+    SYSPROTO_CONTROL
+    UTUN_OPT_IFNAME
+    AF_SYSTEM
+    AF_SYS_CONTROL
+
+*/
+
+//if_tun.h 
+let IFF_TUN = TunC_IFF_TUN
+let IFF_NO_PI = 
+
+//socket.h
+let AF_INET = TunC_AF_INET
+let AF_INET6 = TunC_AF_INET6
+
+//fcntl.h
+let O_RDWR = TunC_O_RDWR()
+
+//socket_type.h
+let SOCK_DGRAM = TunC_SOCK_DGRAM
+
+//if.h
+let IFNAMSIZ = TuncC_IFNAMSIZ
+
+//errno.h
+let EAGAIN = TunC_EAGAIN
+
+
 
 public class TunDevice
 {
@@ -97,6 +58,7 @@ public class TunDevice
     
     public init?(address: String, reader: @escaping (Data, UInt32) -> Void)
     {
+
         self.reader = reader
         
         TunC_function()
@@ -366,9 +328,9 @@ public class TunDevice
     {
         var flags = ifreq()
         //ioctl()
-        flags.ifr_flags = IFF_TUN | IFF_NO_PI
+        ////flags.ifr_flags = IFF_TUN | IFF_NO_PI
 
-        ioctl(socket, TUNSETIFF, &flags)
+        ////ioctl(socket, TUNSETIFF, &flags)
 
 
         // guard let controlIdentifier = getIdentifier(socket: socket) else
