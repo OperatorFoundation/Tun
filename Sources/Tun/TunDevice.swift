@@ -27,24 +27,24 @@ import TunC
 */
 
 //if_tun.h 
-let IFF_TUN = TunC_IFF_TUN
-let IFF_NO_PI = 
+let IFF_TUN = TunC_IFF_TUN()
+let IFF_NO_PI = TunC_IFF_NO_PI()
 
 //socket.h
-let AF_INET = TunC_AF_INET
-let AF_INET6 = TunC_AF_INET6
+let AF_INET = TunC_AF_INET()
+let AF_INET6 = TunC_AF_INET6()
 
 //fcntl.h
 let O_RDWR = TunC_O_RDWR()
 
 //socket_type.h
-let SOCK_DGRAM = TunC_SOCK_DGRAM
+let SOCK_DGRAM = TunC_SOCK_DGRAM()
 
 //if.h
-let IFNAMSIZ = TuncC_IFNAMSIZ
+let IFNAMSIZ = TuncC_IFNAMSIZ()
 
 //errno.h
-let EAGAIN = TunC_EAGAIN
+let EAGAIN = TunC_EAGAIN()
 
 
 
@@ -218,7 +218,7 @@ public class TunDevice
     {
         while true
         {
-            //FIX packet size is fixed!
+            //FIXME: packet size is fixed!
             guard let (data, protocolNumber) = self.read(packetSize: 1500) else
             {
                 return
@@ -327,10 +327,12 @@ public class TunDevice
     func connectControl(socket: Int32) -> Int32?
     {
         var flags = ifreq()
-        //ioctl()
-        ////flags.ifr_flags = IFF_TUN | IFF_NO_PI
+        flags.ifr_ifru.ifru_flags =  IFF_TUN | IFF_NO_PI
 
-        ////ioctl(socket, TUNSETIFF, &flags)
+        //ioctl()
+        //flags.ifr_flags = IFF_TUN | IFF_NO_PI
+
+        //ioctl(socket, TUNSETIFF, &flags)
 
 
         // guard let controlIdentifier = getIdentifier(socket: socket) else
@@ -449,9 +451,6 @@ public class TunDevice
     func paddedArray(source: [Int8], targetSize: Int, padValue: Int8) -> [Int8]
     {
         var result: [Int8] = []
-//        result.append(padValue)
-//        result.append(padValue)
-//        result.append(Int8(0))
         for item in source
         {
             result.append(item)

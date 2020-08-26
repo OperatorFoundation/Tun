@@ -1,44 +1,42 @@
-
-
-
-#include <linux/if_tun.h>
-
-
-#include <fcntl.h>
-#include <socket_type.h>
-#include <errno.h>
-
+#include <strings.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <sys/ioctl.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/route.h>
-
-#include <strings.h>
-#include <stdio.h>
+#include <linux/if_tun.h>
 #include <linux/sockios.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
+
+
+
+
+
+// Start wrapper examples
 void TunC_function();
 int TunC_X();
+// End wrapper examples
 
 
 // Start	/usr/include/asm-generic/fcntl.h
-
 int TunC_O_RDWR();
-
 
 // End		/usr/include/asm-generic/fcntl.h
 
 
-// Start 	socket_type.h
+// Start 	sys/socket.h
 int TunC_SOCK_DGRAM();
+int TunC_AF_INET();
+int TunC_AF_INET6();
 
-// End 		socket_type.h
+// End 		sys/socket.h
 
 
 
@@ -46,6 +44,13 @@ int TunC_SOCK_DGRAM();
 int TuncC_IFNAMSIZ();
 
 // End		if.h
+
+
+
+// Start	errno.h
+int TunC_EAGAIN();
+
+// End		errno.h
 
 
 
@@ -86,11 +91,11 @@ int TunC_TUNGETVNETBE();
 int TunC_TUNSETCARRIER();
 
 // TUNSETIFF ifr flags 
-int TunC_IFF_TUN();
+short int TunC_IFF_TUN();
 int TunC_IFF_TAP();
 int TunC_IFF_NAPI();
 int TunC_IFF_NAPI_FRAGS();
-int TunC_IFF_NO_PI();
+short int TunC_IFF_NO_PI();
 // This flag has no real effect 
 int TunC_IFF_ONE_QUEUE();
 int TunC_IFF_VNET_HDR();

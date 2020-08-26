@@ -1,6 +1,5 @@
 import XCTest
 import Foundation
-import InternetProtocols
 import Datable
 @testable import Tun
 
@@ -38,7 +37,7 @@ final class TunTests: XCTestCase
             print("protocolNumber: \(protocolNumber)")
             print("Number of bytes: \(data.count)")
             print("Data: ")
-            printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+            //printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
         }
         
         guard let tun = TunDevice(address: address, reader: reader) else
@@ -58,7 +57,7 @@ final class TunTests: XCTestCase
         let hexToSend = "4500004000004000400600007f0000017f000001c40d13ad6d4e7ed500000000b002fffffe34000002043fd8010303060101080a175fb6580000000004020000"
         let dataToSend = hexToSend.hexadecimal!
         
-        printDataBytes(bytes: dataToSend, hexDumpFormat: true, seperator: "", decimal: false)
+       // printDataBytes(bytes: dataToSend, hexDumpFormat: true, seperator: "", decimal: false)
         tun.writeV4(dataToSend)
         sleep(1)
         tun.writeV4(dataToSend)

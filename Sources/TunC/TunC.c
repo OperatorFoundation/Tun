@@ -1,6 +1,8 @@
 #include "TunC.h"
 
 
+
+// Start wrapper examples
 #define X 0
 
 void TunC_function()
@@ -11,7 +13,7 @@ int TunC_X()
 {
     return X;
 }
-
+// End wrapper examples
 
 
 
@@ -28,11 +30,23 @@ int TunC_O_RDWR()
 
 
 
-// Start 	socket_type.h
+// Start 	sys/socket.h
 int TunC_SOCK_DGRAM()
 {
 	return SOCK_DGRAM;
 }
+
+int TunC_AF_INET()
+{
+	return AF_INET;
+}
+
+int TunC_AF_INET6()
+{
+	return AF_INET6;
+}
+
+
 
 // End 		socket_type.h
 
@@ -209,7 +223,7 @@ int TunC_TUNSETCARRIER()
 }
 
 // TUNSETIFF ifr flags 
-int TunC_IFF_TUN()
+short int TunC_IFF_TUN()
 {
     return IFF_TUN;
 }
@@ -229,7 +243,7 @@ int TunC_IFF_NAPI_FRAGS()
     return IFF_NAPI_FRAGS;
 }
 
-int TunC_IFF_NO_PI()
+short int TunC_IFF_NO_PI()
 {
     return IFF_NO_PI;
 }
