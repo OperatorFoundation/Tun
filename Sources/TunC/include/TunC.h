@@ -66,7 +66,7 @@ int TunC_TUN_TYPE_MASK();
 // Ioctl defines 
 int TunC_TUNSETNOCSUM();
 int TunC_TUNSETDEBUG();
-int TunC_TUNSETIFF();
+unsigned long int TunC_TUNSETIFF();
 int TunC_TUNSETPERSIST();
 int TunC_TUNSETOWNER();
 int TunC_TUNSETLINK();

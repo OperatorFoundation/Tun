@@ -107,7 +107,7 @@ int TunC_TUNSETDEBUG()
     return TUNSETDEBUG;
 }
 
-int TunC_TUNSETIFF()
+unsigned long int TunC_TUNSETIFF()
 {
     return TUNSETIFF;
 }

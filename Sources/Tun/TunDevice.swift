@@ -26,9 +26,13 @@ import TunC
 
 */
 
+
+
+
 //if_tun.h 
 let IFF_TUN = TunC_IFF_TUN()
 let IFF_NO_PI = TunC_IFF_NO_PI()
+let TUNSETIFF = TunC_TUNSETIFF()
 
 //socket.h
 let AF_INET = TunC_AF_INET()
@@ -71,99 +75,98 @@ public class TunDevice
         print("Created TUN interface \(fd)")
         
         maybeTun = fd
-        
-        // guard let ifname = getInterfaceName(fd: fd) else
-        // {
-        //     return nil
-        // }
-        
-        // print("TUN interface name \(ifname)")
-        
-        // maybeName = ifname
-        
-        // guard setAddress(interfaceName: ifname, addressString: address) else
-        // {//swift
-        //     return nil
-        // }
-        
+
+
+        guard let interfaceName = self.maybeName else { return nil }
+        setAddress(interfaceName: interfaceName, addressString: "10.0.8.99", subnetString: "255.255.255.0")
 
 
         
-        //startTunnel(fd: fd)
+        startTunnel(fd: fd)
     }
 
-    /// Create a UTUN interface.
+    /// Create a TUN interface.
     func createInterface() -> Int32?
     {
         let fd = open("/dev/net/tun", O_RDWR)
-        //socket(PF_SYSTEM, SOCK_DGRAM, SYSPROTO_CONTROL)
+
         guard fd >= 0 else
         {
             print("Failed to open TUN socket")
             return nil
         }
-        
-        let result = connectControl(socket: fd)
-        guard result == 0 else
-        {
-            print("Failed to connect to TUN control socket: \(result)")
-            close(fd)
-            return nil
+
+        var ifr = ifreq()
+        ifr.ifr_ifru.ifru_flags =  IFF_TUN | IFF_NO_PI
+        let result = ioctl(fd, TUNSETIFF, &ifr)
+        print("result of ioctl: \(result)")
+
+
+
+        let name = withUnsafePointer(to: ifr.ifr_ifrn.ifrn_name) {
+            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
+                String(cString: $0)
+            }
         }
+        self.maybeName = name
+        print("interface name: \(self.maybeName)")
 
 
-        
+
+
         return fd
     }
-    
-    // /// Get the name of a UTUN interface the associated socket.
-    // func getInterfaceName(fd: Int32) -> String?
-    // {
-    //     let length = Int(IFNAMSIZ)
-    //     var buffer = [Int8](repeating: 0, count: length)
-    //     var bufferSize: socklen_t = socklen_t(length)
-    //     let result = getsockopt(fd, SYSPROTO_CONTROL, UTUN_OPT_IFNAME, &buffer, &bufferSize)
-        
-    //     guard result >= 0 else
-    //     {
-    //         let errorString = String(cString: strerror(errno))
-    //         print("getsockopt failed while getting the utun interface name: \(errorString)")
-    //         return nil
-    //     }
-        
-    //     return String(cString: &buffer)
-    // }
-    
 
-    
-//     func startTunnel(fd: Int32)
-//     {
-//         if !setSocketNonBlocking(socket: fd)
-//         {
-//             return
-//         }
-        
-// //        guard let newSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: DispatchQueue.main) as? DispatchSource else
-// //        {
-// //            return
-// //        }
-// //
-// //        newSource.setCancelHandler
-// //        {
-// //            close(fd)
-// //            return
-// //        }
-// //
-// //        newSource.setEventHandler
-// //        {
-// //            self.handleRead()
-// //        }
-// //
-// //        newSource.resume()
-// //
-// //        maybeSource = newSource
-//     }
-    
+    func startTunnel(fd: Int32)
+    {
+        if !setSocketNonBlocking(socket: fd)
+        {
+            return
+        }
+
+        guard let newSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: DispatchQueue.main) as? DispatchSource else
+        {
+            return
+        }
+
+        newSource.setCancelHandler
+        {
+            close(fd)
+            return
+        }
+
+        newSource.setEventHandler
+        {
+            self.handleRead()
+        }
+
+        newSource.resume()
+
+        maybeSource = newSource
+    }
+
+    func setSocketNonBlocking(socket: Int32) -> Bool
+    {
+        let currentFlags = fcntl(socket, F_GETFL)
+        guard currentFlags >= 0 else
+        {
+            print("fcntl(F_GETFL) failed:", strerror(errno) ?? 0)
+
+            return false
+        }
+
+        let newFlags = currentFlags | O_NONBLOCK
+
+        guard fcntl(socket, F_SETFL, newFlags) >= 0 else
+        {
+            print("fcntl(F_SETFL) failed: %s\n", strerror(errno) ?? 0);
+
+            return false
+        }
+
+        return true
+    }
+
     public func writeV4(_ packet: Data)
     {
         guard let tun = maybeTun else
@@ -186,33 +189,11 @@ public class TunDevice
         if writeCount < 0
         {
             let errorString = String(cString: strerror(errno))
-            print("Got an error while writing to utun: \(errorString)")
+            print("Got an error while writing to tun: \(errorString)")
         }
     }
 
-    // public func writeV6(_ packet: Data)
-    // {
-    //     let protocolNumber = AF_INET6
-    //     DatableConfig.endianess = .big
-    //     var protocolNumberBuffer = protocolNumber.data
-    //     var buffer = Data(packet)
-    //     var iovecList =
-    //         [
-    //             iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
-    //             iovec(iov_base: &buffer, iov_len: packet.count)
-    //     ]
-        
-    //     guard let tun = maybeTun else {
-    //         return
-    //     }
-        
-    //     let writeCount = writev(tun, &iovecList, Int32(iovecList.count))
-    //     if writeCount < 0
-    //     {
-    //         let errorString = String(cString: strerror(errno))
-    //         print("Got an error while writing to utun: \(errorString)")
-    //     }
-    // }
+
     
     func handleRead()
     {
@@ -242,20 +223,20 @@ public class TunDevice
         var protocolNumber: UInt32 = 0
         var iovecList = [ iovec(iov_base: &protocolNumber, iov_len: MemoryLayout.size(ofValue: protocolNumber)), iovec(iov_base: &buffer, iov_len: buffer.count) ]
         let iovecListPointer = UnsafeBufferPointer<iovec>(start: &iovecList, count: iovecList.count)
-        let utunSocket = Int32((source as DispatchSourceRead).handle)
+        let tunSocket = Int32((source as DispatchSourceRead).handle)
                         
         var error: Int32 = 0
     
         repeat
         {
-            let readCount = readv(utunSocket, iovecListPointer.baseAddress, Int32(iovecListPointer.count))
+            let readCount = readv(tunSocket, iovecListPointer.baseAddress, Int32(iovecListPointer.count))
             error = errno
 
             guard readCount > 0 || error == EAGAIN else
             {
                 if let errorString = String(utf8String: strerror(errno)), readCount < 0
                 {
-                    print("Got an error on the utun socket: \(errorString)")
+                    print("Got an error on the tun socket: \(errorString)")
                 }
                 
                 source.cancel()
@@ -280,173 +261,124 @@ public class TunDevice
         while error == EAGAIN
     }
         
-    // func getIdentifier(socket: Int32) -> UInt32?
-    // {
-    //     var n = UTUN_CONTROL_NAME.array(of: Int8.self)!
-        
-    //     //pad out n
-    //     for _ in 1...(96 - n.count)
-    //     {
-    //         n.append(0)
-    //     }
 
-        
-    //     var kernelControlInfo: ctl_info = ctl_info(ctl_id: 0, ctl_name: (n[0], n[1], n[2], n[3], n[4], n[5], n[6], n[7], n[8], n[9], n[10], n[11], n[12], n[13], n[14], n[15], n[16], n[17], n[18], n[19], n[20], n[21], n[22], n[23], n[24], n[25], n[26], n[27], n[28], n[29], n[30], n[31], n[32], n[33], n[34], n[35], n[36], n[37], n[38], n[39], n[40], n[41], n[42], n[43], n[44], n[45], n[46], n[47], n[48], n[49], n[50], n[51], n[52], n[53], n[54], n[55], n[56], n[57], n[58], n[59], n[60], n[61], n[62], n[63], n[64], n[65], n[66], n[67], n[68], n[69], n[70], n[71], n[72], n[73], n[74], n[75], n[76], n[77], n[78], n[79], n[80], n[81], n[82], n[83], n[84], n[85], n[86], n[87], n[88], n[89], n[90], n[91], n[92], n[93], n[94], n[95]))
+//    func connectControl(socket: Int32) -> Int32?
+//    {
+//        var flags = ifreq()
+//        flags.ifr_ifru.ifru_flags =  IFF_TUN | IFF_NO_PI
+//        ioctl(socket, TUNSETIFF, &flags)
+//
+//        return socket;
+//    }
 
-    //     guard ioctl(socket, CTLIOCGINFO, &kernelControlInfo) != -1 else
-    //     {
-    //         print("ioctl failed on kernel control socket:", strerror(errno) ?? 0);
-    //         return nil;
-    //     }
-
-    //     return kernelControlInfo.ctl_id;
-    // }
-    
-    // func setSocketNonBlocking(socket: Int32) -> Bool
-    // {
-    //     let currentFlags = fcntl(socket, F_GETFL)
-    //     guard currentFlags >= 0 else
-    //     {
-    //         print("fcntl(F_GETFL) failed:", strerror(errno) ?? 0)
-            
-    //         return false
-    //     }
-
-    //     let newFlags = currentFlags | O_NONBLOCK
-
-    //     guard fcntl(socket, F_SETFL, newFlags) >= 0 else
-    //     {
-    //         print("fcntl(F_SETFL) failed: %s\n", strerror(errno) ?? 0);
-            
-    //         return false
-    //     }
-
-    //     return true
-    // }
-    
-    func connectControl(socket: Int32) -> Int32?
+    func setAddress(interfaceName: String, addressString: String, subnetString: String) -> Bool
     {
-        var flags = ifreq()
-        flags.ifr_ifru.ifru_flags =  IFF_TUN | IFF_NO_PI
+        /*
+            notes on linux tun using strace
 
-        //ioctl()
-        //flags.ifr_flags = IFF_TUN | IFF_NO_PI
+            //create a tun interface
+            sudo ip tuntap add mode tun
+                socket(AF_NETLINK, SOCK_RAW|SOCK_CLOEXEC, NETLINK_ROUTE) = 3
+                setsockopt(3, SOL_SOCKET, SO_SNDBUF, [32768], 4) = 0
+                setsockopt(3, SOL_SOCKET, SO_RCVBUF, [1048576], 4) = 0
+                setsockopt(3, SOL_NETLINK, NETLINK_EXT_ACK, [1], 4) = 0
+                bind(3, {sa_family=AF_NETLINK, nl_pid=0, nl_groups=00000000}, 12) = 0
+                getsockname(3, {sa_family=AF_NETLINK, nl_pid=7134, nl_groups=00000000}, [12]) = 0
+                openat(AT_FDCWD, "/dev/net/tun", O_RDWR) = 4
+                ioctl(4, TUNSETIFF, 0x7ffd9ca7adc0)     = 0
+                ioctl(4, TUNSETPERSIST, 0x1)            = 0
 
-        //ioctl(socket, TUNSETIFF, &flags)
+
+            //set address and bring up a tun interface
+            sudo ifconfig tun0 10.0.8.99/24 up
+                ioctl(4, SIOCSIFADDR, {ifr_name="tun0", ifr_addr={sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("10.0.8.99")}}) = 0
+                ioctl(4, SIOCGIFFLAGS, {ifr_name="tun0", ifr_flags=IFF_POINTOPOINT|IFF_NOARP|IFF_MULTICAST}) = 0
+                ioctl(4, SIOCSIFFLAGS, {ifr_name="tun0", ifr_flags=IFF_UP|IFF_POINTOPOINT|IFF_RUNNING|IFF_NOARP|IFF_MULTICAST}) = 0
+                ioctl(4, SIOCGIFFLAGS, {ifr_name="tun0", ifr_flags=IFF_UP|IFF_POINTOPOINT|IFF_NOARP|IFF_MULTICAST}) = 0
+                ioctl(4, SIOCSIFFLAGS, {ifr_name="tun0", ifr_flags=IFF_UP|IFF_POINTOPOINT|IFF_RUNNING|IFF_NOARP|IFF_MULTICAST}) = 0
+                ioctl(4, SIOCSIFNETMASK, {ifr_name="tun0", ifr_netmask={sa_family=AF_INET, sin_port=htons(8695), sin_addr=inet_addr("255.255.255.0")}}) = 0
+
+                above seems to set a route, so: sudo route delete -net 10.0.8.0/24 tun0  will clear it.
+
+            //set route
+            sudo route add -net 10.0.8.0/24 tun0
+                socket(AF_INET, SOCK_DGRAM, IPPROTO_IP) = 3
+                ioctl(3, SIOCADDRT, 0x7ffea4766590)     = 0
+
+            //show routing table
+            route -n
+
+            //delete a tun interface
+            sudo ip link delete tun0
 
 
-        // guard let controlIdentifier = getIdentifier(socket: socket) else
-        // {
-        //     return nil
-        // }
-        
-        // guard controlIdentifier > 0 else
-        // {
-        //     return nil
-        // }
+            //net-tools, show all interfaces including an unconfigured tun interface.
+            ifconfig -a
+        */
 
-        // let size = MemoryLayout<sockaddr_ctl>.stride
-        
-        // var control: sockaddr_ctl = sockaddr_ctl(
-        //     sc_len: UInt8(size),
-        //     sc_family: UInt8(AF_SYSTEM),
-        //     ss_sysaddr: UInt16(AF_SYS_CONTROL),
-        //     sc_id: controlIdentifier,
-        //     sc_unit: 0,
-        //     sc_reserved: (0, 0, 0, 0, 0)
-        // )
 
-        // let connectResult = withUnsafeMutablePointer(to: &control)
-        // {
-        //     controlPointer -> Int32 in
-            
-        //     return controlPointer.withMemoryRebound(to: sockaddr.self, capacity: 1)
-        //     {
-        //         sockaddrPointer -> Int32 in
-                
-        //         return connect(socket, sockaddrPointer, socklen_t(size))
-        //     }
-        // }
-        
-         return 0;
+        /*
+            https://stackoverflow.com/questions/6652384/how-to-set-the-ip-address-from-c-in-linux
+            struct ifreq ifr;
+            const char * name = "eth1";
+            int fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+
+            strncpy(ifr.ifr_name, name, IFNAMSIZ);
+
+            ifr.ifr_addr.sa_family = AF_INET;
+            inet_pton(AF_INET, "10.12.0.1", ifr.ifr_addr.sa_data + 2);
+            ioctl(fd, SIOCSIFADDR, &ifr);
+
+            inet_pton(AF_INET, "255.255.0.0", ifr.ifr_addr.sa_data + 2);
+            ioctl(fd, SIOCSIFNETMASK, &ifr);
+
+            ioctl(fd, SIOCGIFFLAGS, &ifr);
+            strncpy(ifr.ifr_name, name, IFNAMSIZ);
+            ifr.ifr_flags |= (IFF_UP | IFF_RUNNING);
+
+            ioctl(fd, SIOCSIFFLAGS, &ifr);
+        //        struct sockaddr_in* addr = (struct sockaddr_in*)&ifr.ifr_addr;
+        //        inet_pton(AF_INET, "10.12.0.1", &addr->sin_addr);  //converts a string IP address to numeric binary
+
+        */
+
+
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/ifconfig")
+
+        task.arguments = [interfaceName, addressString, "netmask", subnetString]
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+        }
+        catch {
+            print("error: \(error)")
+        }
+
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        print("Output:\n\(output)\n")
+        print("Error:\n\(error)\n")
+
+        return false
     }
 
-//     func setAddress(interfaceName: String, addressString: String) -> Bool
-//     {
-//         var address = in_addr()
-        
-//         let cstring = addressString.cString(using: .utf8)
-                
-//         guard inet_pton(AF_INET, cstring, &address) == 1 else
-//         {
-//             return false
-//         }
 
-//         guard let interfaceNameArray = interfaceName.data.array(of: Int8.self) else
-//         {
-//             return false
-//         }
-//         var infra_name: [Int8] = paddedArray(source: interfaceNameArray, targetSize: 16, padValue: 0)
-        
-//         let addressParts = addressString.split(separator: ".")
-//         let sin_addr = addressParts.map({Int8($0)!})
-        
-        
-// //        guard let addressArray = addressString.data.array(of: Int8.self) else
-// //        {
-// //            return false
-// //        }
-        
-//         //var sin_addr: [Int8] = paddedArray(source: addressBytes, targetSize: 14, padValue: 0)
-        
-//         let socketDescriptor = socket(AF_INET, SOCK_DGRAM, 0)
 
-//         guard socketDescriptor > 0 else
-//         {
-//             print("Failed to create a DGRAM socket:", strerror(errno) ?? 0)
-            
-//             return false
-//         }
-//         //FIXME: calculate size correctly instead of constant
-//         let sockaddr_in_size = MemoryLayout<sockaddr_in>.size
-        
-//         var interfaceAliasRequest = ifaliasreq(
-//             ifra_name: (infra_name[0], infra_name[1], infra_name[2], infra_name[3], infra_name[4], infra_name[5], infra_name[6], infra_name[7], infra_name[8], infra_name[9], infra_name[10], infra_name[11], infra_name[12], infra_name[13], infra_name[14], infra_name[15]),
-//             ifra_addr: sockaddr(
-//                 sa_len: __uint8_t(sockaddr_in_size),
-//                 sa_family: sa_family_t(AF_INET),
-//                 sa_data: (0,0, sin_addr[0], sin_addr[1], sin_addr[2], sin_addr[3], 0,0,0,0,0,0,0,0)
-//             ),
-//             ifra_broadaddr: sockaddr(
-//                 sa_len: __uint8_t(sockaddr_in_size),
-//                 sa_family: sa_family_t(AF_INET),
-//                 sa_data: (0,0, sin_addr[0], sin_addr[1], sin_addr[2], sin_addr[3], 0,0,0,0,0,0,0,0)
-//             ),
-//             ifra_mask: sockaddr(
-//                 sa_len: __uint8_t(sockaddr_in_size),
-//                 sa_family: sa_family_t(AF_INET),
-//                 sa_data: ( 0,0, Int8(bitPattern: 255), Int8(bitPattern: 255), Int8(bitPattern: 255), Int8(bitPattern: 255), 0, 0, 0, 0, 0, 0, 0, 0)
-//             )
-//         )
-        
-//         let results = ioctl(socketDescriptor, SIOCAIFADDR, &interfaceAliasRequest)
-        
-        
-        
-//         guard Int(results) == 0 else
-//         {
-//             print("Failed to set the address of the interface:\n \(results)")
-           
-//             close(socketDescriptor)
-//             return false
-//         }
-
-//         close(socketDescriptor)
-        
-// //            memcpy(&((struct sockaddr_in *)&interfaceAliasRequest.ifra_broadaddr)->sin_addr, &address, sizeof(address));
-        
-//         return true
-//     }
     
     func paddedArray(source: [Int8], targetSize: Int, padValue: Int8) -> [Int8]
     {
