@@ -74,9 +74,7 @@ sleep(2)
 
 print("Hello, Operator.")
 
-
-
-var address = "10.11.12.13"
+var address = "10.0.8.99"
 
 if CommandLine.arguments.count > 1 {
     address = CommandLine.arguments[1]
@@ -92,9 +90,6 @@ let reader: (Data) -> Void = {
     print("Number of bytes: \(data.count)")
     print("Data: ")
     _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-
-
-
 }
 
 if let tun = TunDevice(address: address, reader: reader) {
@@ -111,7 +106,6 @@ if let tun = TunDevice(address: address, reader: reader) {
         print("✍️  Write Packet  ✍️")
         print("Packet Bytes to Write: ")
         _ = printDataBytes(bytes: packetBytes, hexDumpFormat: true, seperator: "", decimal: false)
-        
         tun.writeV4(packetBytes)
     })
 

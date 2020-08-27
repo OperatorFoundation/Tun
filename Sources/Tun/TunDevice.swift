@@ -65,7 +65,7 @@ public class TunDevice
 
         self.reader = reader
         
-        TunC_function()
+        //TunC_function()
         
         guard let fd = createInterface() else
         {
@@ -76,12 +76,9 @@ public class TunDevice
         
         maybeTun = fd
 
-
         guard let interfaceName = self.maybeName else { return nil }
-        setAddress(interfaceName: interfaceName, addressString: "10.0.8.99", subnetString: "255.255.255.0")
+        setAddress(interfaceName: interfaceName, addressString: address, subnetString: "255.255.255.0")
 
-
-        
         startTunnel(fd: fd)
     }
 
@@ -101,8 +98,6 @@ public class TunDevice
         let result = ioctl(fd, TUNSETIFF, &ifr)
         print("result of ioctl: \(result)")
 
-
-
         let name = withUnsafePointer(to: ifr.ifr_ifrn.ifrn_name) {
             $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout.size(ofValue: $0)) {
                 String(cString: $0)
@@ -110,9 +105,6 @@ public class TunDevice
         }
         self.maybeName = name
         print("interface name: \(self.maybeName)")
-
-
-
 
         return fd
     }
@@ -173,10 +165,12 @@ public class TunDevice
         {
             return
         }
-        var buffer = packet
-        print("buffer.count \(buffer.count)")
+
+        var buffer = [UInt8](packet)
+
         let writeCount = write(tun_fd, &buffer, buffer.count )
 
+        print("writeCount: \(writeCount)")
         if writeCount < 0
         {
             let errorString = String(cString: strerror(errno))
@@ -217,6 +211,7 @@ public class TunDevice
         DatableConfig.endianess = .big
         var protocolNumberBuffer = protocolNumber.data
         var buffer = Data(packet)
+
         var iovecList =
                 [
                     iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
@@ -270,11 +265,9 @@ public class TunDevice
         }
         
         var buffer = [UInt8](repeating:0, count: packetSize)
-        //var protocolNumber: UInt32 = 0
         var iovecList = [ iovec(iov_base: &buffer, iov_len: buffer.count) ]
         let iovecListPointer = UnsafeBufferPointer<iovec>(start: &iovecList, count: iovecList.count)
         let tunSocket = Int32((source as DispatchSourceRead).handle)
-                        
         var error: Int32 = 0
     
         repeat
@@ -298,13 +291,8 @@ public class TunDevice
             {
                 return nil
             }
-//
-//            if protocolNumber.littleEndian == protocolNumber
-//            {
-//                protocolNumber = protocolNumber.byteSwapped
-//            }
 
-            let data = Data(bytes: &buffer, count: readCount)// - MemoryLayout.size(ofValue: protocolNumber))
+            let data = Data(bytes: &buffer, count: readCount)
             
             return (data)
         }
