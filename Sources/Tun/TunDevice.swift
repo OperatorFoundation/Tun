@@ -58,9 +58,9 @@ public class TunDevice
     var maybeName: String?
     var maybeTun: Int32?
     var maybeSource: DispatchSource?
-    let reader: (Data, UInt32) -> Void
+    let reader: (Data) -> Void
     
-    public init?(address: String, reader: @escaping (Data, UInt32) -> Void)
+    public init?(address: String, reader: @escaping (Data) -> Void)
     {
 
         self.reader = reader
@@ -169,22 +169,64 @@ public class TunDevice
 
     public func writeV4(_ packet: Data)
     {
-        guard let tun = maybeTun else
+        guard let tun_fd = maybeTun else
         {
             return
         }
-        
-        let protocolNumber = AF_INET
+        var buffer = packet
+        print("buffer.count \(buffer.count)")
+        let writeCount = write(tun_fd, &buffer, buffer.count )
+
+        if writeCount < 0
+        {
+            let errorString = String(cString: strerror(errno))
+            print("Got an error while writing to tun: \(errorString)")
+        }
+
+    }
+
+//    public func writeV4(_ packet: Data)
+//    {
+//        guard let tun = maybeTun else
+//        {
+//            return
+//        }
+//
+//        let protocolNumber = AF_INET
+//        DatableConfig.endianess = .big
+//        var protocolNumberBuffer = protocolNumber.data
+//        var buffer = Data(packet)
+//
+//        var iovecList =
+//                [
+//                    iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
+//                    iovec(iov_base: &buffer, iov_len: packet.count)
+//                ]
+//
+//        let writeCount = writev(tun, &iovecList, Int32(iovecList.count))
+//        if writeCount < 0
+//        {
+//            let errorString = String(cString: strerror(errno))
+//            print("Got an error while writing to utun: \(errorString)")
+//        }
+//    }
+
+    public func writeV6(_ packet: Data)
+    {
+        let protocolNumber = AF_INET6
         DatableConfig.endianess = .big
         var protocolNumberBuffer = protocolNumber.data
         var buffer = Data(packet)
-                    
         var iovecList =
-        [
-            iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
-            iovec(iov_base: &buffer, iov_len: packet.count)
-        ]
-                
+                [
+                    iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
+                    iovec(iov_base: &buffer, iov_len: packet.count)
+                ]
+
+        guard let tun = maybeTun else {
+            return
+        }
+
         let writeCount = writev(tun, &iovecList, Int32(iovecList.count))
         if writeCount < 0
         {
@@ -193,23 +235,31 @@ public class TunDevice
         }
     }
 
+    func getIdentifier(socket: Int32) -> UInt32?
+    {
+        return 0
+    }
 
-    
+    func getInterfaceName(fd: Int32) -> String?
+    {
+        return nil
+    }
+
     func handleRead()
     {
         while true
         {
             //FIXME: packet size is fixed!
-            guard let (data, protocolNumber) = self.read(packetSize: 1500) else
+            guard let (data) = self.read(packetSize: 1500) else
             {
                 return
             }
             
-            self.reader(data, protocolNumber)
+            self.reader(data)
         }
     }
     
-    public func read(packetSize: Int) -> (Data, UInt32)?
+    public func read(packetSize: Int) -> Data?
     {
         print("\n📚  Read called on TUN device. 📚")
         print("Requested packet size is \(packetSize)\n")
@@ -220,8 +270,8 @@ public class TunDevice
         }
         
         var buffer = [UInt8](repeating:0, count: packetSize)
-        var protocolNumber: UInt32 = 0
-        var iovecList = [ iovec(iov_base: &protocolNumber, iov_len: MemoryLayout.size(ofValue: protocolNumber)), iovec(iov_base: &buffer, iov_len: buffer.count) ]
+        //var protocolNumber: UInt32 = 0
+        var iovecList = [ iovec(iov_base: &buffer, iov_len: buffer.count) ]
         let iovecListPointer = UnsafeBufferPointer<iovec>(start: &iovecList, count: iovecList.count)
         let tunSocket = Int32((source as DispatchSourceRead).handle)
                         
@@ -244,19 +294,19 @@ public class TunDevice
                 return nil
             }
 
-            guard readCount > MemoryLayout.size(ofValue: protocolNumber) else
+            guard readCount > 0 else
             {
                 return nil
             }
+//
+//            if protocolNumber.littleEndian == protocolNumber
+//            {
+//                protocolNumber = protocolNumber.byteSwapped
+//            }
 
-            if protocolNumber.littleEndian == protocolNumber
-            {
-                protocolNumber = protocolNumber.byteSwapped
-            }
-
-            let data = Data(bytes: &buffer, count: readCount - MemoryLayout.size(ofValue: protocolNumber))
+            let data = Data(bytes: &buffer, count: readCount)// - MemoryLayout.size(ofValue: protocolNumber))
             
-            return (data, protocolNumber)
+            return (data)
         }
         while error == EAGAIN
     }
