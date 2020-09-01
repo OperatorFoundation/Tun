@@ -71,16 +71,24 @@ let packetBytes = Data(array: [
     0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b,    0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33,
     0x34, 0x35, 0x36, 0x37])
 
-
+var haveData: Bool = false
+var theData = Data()
 
 private final class TrafficHandler: ChannelInboundHandler {
     public typealias InboundIn = ByteBuffer
     public typealias OutboundOut = ByteBuffer
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        // As we are not really interested getting notified on success or failure we just pass nil as promise to
-        // reduce allocations.
-        context.write(data, promise: nil)
+        //handles incoming data over the TCP connection
+
+        let id = ObjectIdentifier(context.channel)
+        var read = self.unwrapInboundIn(data)
+        guard let bytes = read.readBytes(length: read.readableBytes) else { return }
+
+        theData = Data(bytes)
+        haveData = true
+
+        //context.writeAndFlush(self.wrapOutboundOut(read), promise: nil)
     }
 
     // Flush it out. This can make use of gathering writes if multiple buffers are pending
@@ -97,7 +105,10 @@ private final class TrafficHandler: ChannelInboundHandler {
     }
 }
 
-
+public func takeData(data: NIOAny)
+{
+    print("data: \(data)")
+}
 
 
 struct TunTesterCli: ParsableCommand
@@ -112,10 +123,10 @@ struct TunTesterCli: ParsableCommand
     @Flag(name: [.short, .customLong("server")], help: "If the server flag is set (i.e. -s or --server) then TunTesterCli will run in server mode, if flag is omitted then it will run in client mode.")
     var server = false
 
-    @Option(name: [.short, .customLong("ip")], help: "The IPv4 address. If server mode then it is the IP address to listen on, if client mode then it is the IP addrees of the server to connect to.") //fix with better examples
+    @Option(name: [.short, .customLong("ip")], default: "127.0.0.1", help: "The IPv4 address. If server mode then it is the IP address to listen on, if client mode then it is the IP addrees of the server to connect to.") //fix with better examples
     var address: String
 
-    @Option(name: [.short, .customLong("port")], help: "The TCP port. If server mode then it is the TCP port to listen on, if client mode then it is the TCP port of the server to connect to.") //fix with better examples
+    @Option(name: [.short, .customLong("port")], default: 5555, help: "The TCP port. If server mode then it is the TCP port to listen on, if client mode then it is the TCP port of the server to connect to.") //fix with better examples
     var port: Int
 
 
@@ -123,11 +134,13 @@ struct TunTesterCli: ParsableCommand
     {
         guard self.port > 0 && self.port <= 65535 else
         {
-            throw ValidationError("'<port>' must be between 1 and 65535. Use --help for more info.")
+            throw ValidationError("The port must be between 1 and 65535. Use --help for more info.")
         }
 
-
-
+        if address.range(of: #"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"#, options: .regularExpression) == nil
+        {
+            throw ValidationError("'\(address)' is not a valid IPv4 address.")
+        }
 
 
     }
@@ -142,13 +155,8 @@ struct TunTesterCli: ParsableCommand
         print("Address: \(address)")
 
 
-        let defaultHost = "::1"
-        let defaultPort: Int = 9999
-
-
-
-
         let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+
         if server
         {
             print("Mode: server")
@@ -175,34 +183,62 @@ struct TunTesterCli: ParsableCommand
 
             enum BindTo {
                 case ip(host: String, port: Int)
-                case unixDomainSocket(path: String)
             }
 
             let bindTarget: BindTo
-            switch (arg1, arg1.flatMap(Int.init), arg2.flatMap(Int.init)) {
-            case (.some(let h), _ , .some(let p)):
-                /* we got two arguments, let's interpret that as host and port */
-                bindTarget = .ip(host: h, port: p)
-            case (.some(let portString), .none, _):
-                /* couldn't parse as number, expecting unix domain socket path */
-                bindTarget = .unixDomainSocket(path: portString)
-            case (_, .some(let p), _):
-                /* only one argument --> port */
-                bindTarget = .ip(host: defaultHost, port: p)
-            default:
-                bindTarget = .ip(host: defaultHost, port: defaultPort)
-            }
+            bindTarget = .ip(host: address, port: port)
 
             let channel = try { () -> Channel in
                 switch bindTarget {
                 case .ip(let host, let port):
                     return try bootstrap.bind(host: host, port: port).wait()
-                case .unixDomainSocket(let path):
-                    return try bootstrap.bind(unixDomainSocketPath: path).wait()
                 }
             }()
 
             print("Server started and listening on \(channel.localAddress!)")
+
+
+            let reader: (Data) -> Void = {
+                data in
+                //packetCount += 1
+                //print("packet count: \(packetCount)")
+                print("Number of bytes: \(data.count)")
+                print("Data: ")
+                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                try! channel.writeAndFlush(data).wait()
+            }
+
+            guard let tun  = TunDevice(address: address, reader: reader) else { return }
+
+            while true
+            {
+                if haveData
+                {
+                    print("got data")
+                    haveData = false
+                    tun.writeV4(theData)
+                }
+            }
+//            if let tun = TunDevice(address: address, reader: reader) {
+//
+//                print("tun: \(tun)")
+//
+////            print(".")
+////            if let result = tun.read(packetSize: 1500)
+////            {
+////                print("Result of read: \(result)")
+////            }
+//
+////            let timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true, block: { timer in
+////                print("✍️  Write Packet  ✍️")
+////                print("Packet Bytes to Write: ")
+////                _ = printDataBytes(bytes: packetBytes, hexDumpFormat: true, seperator: "", decimal: false)
+////                tun.writeV4(packetBytes)
+////            })
+//
+//            }
+
+
 
         }
         else
@@ -218,63 +254,48 @@ struct TunTesterCli: ParsableCommand
                 try! group.syncShutdownGracefully()
             }
 
-
-            let connectTarget: ConnectTo
-            switch (arg1, arg1.flatMap(Int.init), arg2.flatMap(Int.init)) {
-            case (.some(let h), _ , .some(let p)):
-                /* we got two arguments, let's interpret that as host and port */
-                connectTarget = .ip(host: h, port: p)
-            case (.some(let portString), .none, _):
-                /* couldn't parse as number, expecting unix domain socket path */
-                connectTarget = .unixDomainSocket(path: portString)
-            case (_, .some(let p), _):
-                /* only one argument --> port */
-                connectTarget = .ip(host: defaultHost, port: p)
-            default:
-                connectTarget = .ip(host: defaultHost, port: defaultPort)
+            enum ConnectTo {
+                case ip(host: String, port: Int)
             }
 
+            let connectTarget: ConnectTo
+            connectTarget = .ip(host: address, port: port)
 
             let channel = try { () -> Channel in
                 switch connectTarget {
                 case .ip(let host, let port):
                     return try bootstrap.connect(host: host, port: port).wait()
-                case .unixDomainSocket(let path):
-                    return try bootstrap.connect(unixDomainSocketPath: path).wait()
                 }
             }()
 
 
-        }
-
-
-        let reader: (Data) -> Void = {
-            data in
-            //packetCount += 1
-            //print("packet count: \(packetCount)")
-            print("Number of bytes: \(data.count)")
-            print("Data: ")
-            _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-        }
-
-        if let tun = TunDevice(address: address, reader: reader) {
-
-            print("tun: \(tun)")
-
-            print(".")
-            if let result = tun.read(packetSize: 1500)
-            {
-                print("Result of read: \(result)")
+            let reader: (Data) -> Void = {
+                data in
+                //packetCount += 1
+                //print("packet count: \(packetCount)")
+                print("Number of bytes: \(data.count)")
+                print("Data: ")
+                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                try! channel.writeAndFlush(data).wait()
             }
 
-            let timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true, block: { timer in
-                print("✍️  Write Packet  ✍️")
-                print("Packet Bytes to Write: ")
-                _ = printDataBytes(bytes: packetBytes, hexDumpFormat: true, seperator: "", decimal: false)
-                tun.writeV4(packetBytes)
-            })
+
+            guard let tun  = TunDevice(address: address, reader: reader) else { return }
+
+            while true
+            {
+                if haveData
+                {
+                    print("got data")
+                    haveData = false
+                    tun.writeV4(theData)
+                }
+            }
 
         }
+
+        print("end")
+
     }
 
 
@@ -289,13 +310,6 @@ TunTesterCli.main()
 
 
 
-
-
-
-
-
-
-//RunLoop.current.run()
 
 
 
