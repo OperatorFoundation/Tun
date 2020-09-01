@@ -242,6 +242,7 @@ public class TunDevice
 
     func handleRead()
     {
+        print("handle read")
         while true
         {
             //FIXME: packet size is fixed!

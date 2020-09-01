@@ -2,6 +2,7 @@ import Foundation
 import Tun
 import NIO
 import ArgumentParser
+import Dispatch
 
 
 func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, decimal: Bool, enablePrinting: Bool = true) -> String
@@ -73,6 +74,11 @@ let packetBytes = Data(array: [
 
 var haveData: Bool = false
 var theData = Data()
+
+var haveTunData: Bool = false
+var theTunData = Data()
+
+let q = DispatchQueue.global()
 
 private final class TrafficHandler: ChannelInboundHandler {
     public typealias InboundIn = ByteBuffer
@@ -170,6 +176,29 @@ struct TunTesterCli: ParsableCommand
 
         let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 
+        let reader: (Data) -> Void = {
+            data in
+            //packetCount += 1
+            //print("packet count: \(packetCount)")
+            print("Number of bytes: \(data.count)")
+            print("Data: ")
+            _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+            theTunData = data
+            haveTunData = true
+            //try! channel.writeAndFlush(data).wait()
+        }
+        var tunAddress = ""
+        if server
+        {
+            tunAddress = "10.4.2.5"
+        }
+        else
+        {
+            tunAddress = "10.4.2.99"
+        }
+
+        guard let tun  = TunDevice(address: tunAddress, reader: reader) else { return }
+
         if server
         {
             print("Mode: server")
@@ -211,45 +240,6 @@ struct TunTesterCli: ParsableCommand
             print("Server started and listening on \(channel.localAddress!)")
 
 
-            let reader: (Data) -> Void = {
-                data in
-                //packetCount += 1
-                //print("packet count: \(packetCount)")
-                print("Number of bytes: \(data.count)")
-                print("Data: ")
-                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-                try! channel.writeAndFlush(data).wait()
-            }
-
-            guard let tun  = TunDevice(address: "10.4.2.5", reader: reader) else { return }
-            tun.read(packetSize: 1600)
-            while true
-            {
-                if haveData
-                {
-                    print("got data")
-                    haveData = false
-                    tun.writeV4(theData)
-                }
-            }
-//            if let tun = TunDevice(address: address, reader: reader) {
-//
-//                print("tun: \(tun)")
-//
-////            print(".")
-////            if let result = tun.read(packetSize: 1500)
-////            {
-////                print("Result of read: \(result)")
-////            }
-//
-////            let timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true, block: { timer in
-////                print("✍️  Write Packet  ✍️")
-////                print("Packet Bytes to Write: ")
-////                _ = printDataBytes(bytes: packetBytes, hexDumpFormat: true, seperator: "", decimal: false)
-////                tun.writeV4(packetBytes)
-////            })
-//
-//            }
 
 
 
@@ -282,30 +272,25 @@ struct TunTesterCli: ParsableCommand
             }()
 
 
-            let reader: (Data) -> Void = {
-                data in
-                //packetCount += 1
-                //print("packet count: \(packetCount)")
-                print("Number of bytes: \(data.count)")
-                print("Data: ")
-                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-                try! channel.writeAndFlush(data).wait()
-            }
-
-
-            guard let tun  = TunDevice(address: "10.4.2.99", reader: reader) else { return }
-
-            while true
-            {
-                if haveData
-                {
-                    print("got data")
-                    haveData = false
-                    tun.writeV4(theData)
-                }
-            }
 
         }
+
+//        while true {
+//            if haveData
+//            {
+//                print("got tunnel data")
+//                haveData = false
+//                tun.writeV4(theData)
+//            }
+//
+//            if haveTunData
+//            {
+//                print("got Tun data")
+//                haveTunData = false
+//
+//            }
+//
+//        }
 
         print("end")
 
@@ -316,8 +301,9 @@ struct TunTesterCli: ParsableCommand
 
 }
 
+print("near end")
 TunTesterCli.main()
-
+RunLoop.current.run()
 
 
 
