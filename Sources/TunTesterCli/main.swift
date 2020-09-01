@@ -80,7 +80,7 @@ private final class TrafficHandler: ChannelInboundHandler {
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         //handles incoming data over the TCP connection
-
+        print("got tcp data")
         let id = ObjectIdentifier(context.channel)
         var read = self.unwrapInboundIn(data)
         guard let bytes = read.readBytes(length: read.readableBytes) else { return }
@@ -95,6 +95,19 @@ private final class TrafficHandler: ChannelInboundHandler {
     public func channelReadComplete(context: ChannelHandlerContext) {
         context.flush()
     }
+
+    public func channelActive(context: ChannelHandlerContext) {
+        let remoteAddress = context.remoteAddress!
+        print( "Connected with address: \(remoteAddress)\n")
+
+    }
+
+    public func channelInactive(context: ChannelHandlerContext) {
+        let remoteAddress = context.remoteAddress!
+        print( "Disconnect with address: \(remoteAddress)\n")
+    }
+
+
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {
         print("error: ", error)
@@ -208,8 +221,8 @@ struct TunTesterCli: ParsableCommand
                 try! channel.writeAndFlush(data).wait()
             }
 
-            guard let tun  = TunDevice(address: address, reader: reader) else { return }
-
+            guard let tun  = TunDevice(address: "10.4.2.5", reader: reader) else { return }
+            tun.read(packetSize: 1600)
             while true
             {
                 if haveData
@@ -280,7 +293,7 @@ struct TunTesterCli: ParsableCommand
             }
 
 
-            guard let tun  = TunDevice(address: address, reader: reader) else { return }
+            guard let tun  = TunDevice(address: "10.4.2.99", reader: reader) else { return }
 
             while true
             {
