@@ -42,7 +42,7 @@ let AF_INET6 = TunC_AF_INET6()
 let O_RDWR = TunC_O_RDWR()
 
 //socket_type.h
-let SOCK_DGRAM = TunC_SOCK_DGRAM()
+public let SOCK_DGRAM = TunC_SOCK_DGRAM()
 
 //if.h
 let IFNAMSIZ = TuncC_IFNAMSIZ()

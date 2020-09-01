@@ -1,5 +1,8 @@
 import Foundation
 import Tun
+import NIO
+import ArgumentParser
+
 
 func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, decimal: Bool, enablePrinting: Bool = true) -> String
 {
@@ -69,49 +72,230 @@ let packetBytes = Data(array: [
     0x34, 0x35, 0x36, 0x37])
 
 
-print("Sleeping 2 seconds to allow debugger to attach to process...")
-sleep(2)
 
-print("Hello, Operator.")
+private final class TrafficHandler: ChannelInboundHandler {
+    public typealias InboundIn = ByteBuffer
+    public typealias OutboundOut = ByteBuffer
 
-var address = "10.0.8.99"
-
-if CommandLine.arguments.count > 1 {
-    address = CommandLine.arguments[1]
-}
-print("Address: \(address)")
-
-public var packetCount = 0
-
-let reader: (Data) -> Void = {
-    data in
-    packetCount += 1
-    print("packet count: \(packetCount)")
-    print("Number of bytes: \(data.count)")
-    print("Data: ")
-    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-}
-
-if let tun = TunDevice(address: address, reader: reader) {
-
-    print("tun: \(tun)")
-
-    print(".")
-    if let result = tun.read(packetSize: 1500)
-    {
-        print("Result of read: \(result)")
+    public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        // As we are not really interested getting notified on success or failure we just pass nil as promise to
+        // reduce allocations.
+        context.write(data, promise: nil)
     }
 
-    let timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true, block: { timer in
-        print("✍️  Write Packet  ✍️")
-        print("Packet Bytes to Write: ")
-        _ = printDataBytes(bytes: packetBytes, hexDumpFormat: true, seperator: "", decimal: false)
-        tun.writeV4(packetBytes)
-    })
+    // Flush it out. This can make use of gathering writes if multiple buffers are pending
+    public func channelReadComplete(context: ChannelHandlerContext) {
+        context.flush()
+    }
+
+    public func errorCaught(context: ChannelHandlerContext, error: Error) {
+        print("error: ", error)
+
+        // As we are not really interested getting notified on success or failure we just pass nil as promise to
+        // reduce allocations.
+        context.close(promise: nil)
+    }
+}
+
+
+
+
+struct TunTesterCli: ParsableCommand
+{
+
+    static var configuration = CommandConfiguration(
+            abstract: "Program to test Tun Library, implements simple VPN.",
+            discussion: """
+                        TunTesterCli can be invoked as either a server or a client. The client/server connection is TCP and forwards packets received on the tun interface over the TCP tunnel
+                        """)
+
+    @Flag(name: [.short, .customLong("server")], help: "If the server flag is set (i.e. -s or --server) then TunTesterCli will run in server mode, if flag is omitted then it will run in client mode.")
+    var server = false
+
+    @Option(name: [.short, .customLong("ip")], help: "The IPv4 address. If server mode then it is the IP address to listen on, if client mode then it is the IP addrees of the server to connect to.") //fix with better examples
+    var address: String
+
+    @Option(name: [.short, .customLong("port")], help: "The TCP port. If server mode then it is the TCP port to listen on, if client mode then it is the TCP port of the server to connect to.") //fix with better examples
+    var port: Int
+
+
+    func validate() throws
+    {
+        guard self.port > 0 && self.port <= 65535 else
+        {
+            throw ValidationError("'<port>' must be between 1 and 65535. Use --help for more info.")
+        }
+
+
+
+
+
+    }
+    //public var packetCount = 0
+    func run() throws
+    {
+
+        print("Sleeping 2 seconds to allow debugger to attach to process...")
+        sleep(2)
+
+        print("Hello, Operator.")
+        print("Address: \(address)")
+
+
+        let defaultHost = "::1"
+        let defaultPort: Int = 9999
+
+
+
+
+        let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+        if server
+        {
+            print("Mode: server")
+            let bootstrap = ServerBootstrap(group: group)
+                    // Specify backlog and enable SO_REUSEADDR for the server itself
+                    .serverChannelOption(ChannelOptions.backlog, value: 256)
+                    .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+
+                    // Set the handlers that are appled to the accepted Channels
+                    .childChannelInitializer { channel in
+                        // Ensure we don't read faster than we can write by adding the BackPressureHandler into the pipeline.
+                        channel.pipeline.addHandler(BackPressureHandler()).flatMap { v in
+                            channel.pipeline.addHandler(TrafficHandler())
+                        }
+                    }
+
+                    // Enable SO_REUSEADDR for the accepted Channels
+                    .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+                    .childChannelOption(ChannelOptions.maxMessagesPerRead, value: 16)
+                    .childChannelOption(ChannelOptions.recvAllocator, value: AdaptiveRecvByteBufferAllocator())
+            defer {
+                try! group.syncShutdownGracefully()
+            }
+
+            enum BindTo {
+                case ip(host: String, port: Int)
+                case unixDomainSocket(path: String)
+            }
+
+            let bindTarget: BindTo
+            switch (arg1, arg1.flatMap(Int.init), arg2.flatMap(Int.init)) {
+            case (.some(let h), _ , .some(let p)):
+                /* we got two arguments, let's interpret that as host and port */
+                bindTarget = .ip(host: h, port: p)
+            case (.some(let portString), .none, _):
+                /* couldn't parse as number, expecting unix domain socket path */
+                bindTarget = .unixDomainSocket(path: portString)
+            case (_, .some(let p), _):
+                /* only one argument --> port */
+                bindTarget = .ip(host: defaultHost, port: p)
+            default:
+                bindTarget = .ip(host: defaultHost, port: defaultPort)
+            }
+
+            let channel = try { () -> Channel in
+                switch bindTarget {
+                case .ip(let host, let port):
+                    return try bootstrap.bind(host: host, port: port).wait()
+                case .unixDomainSocket(let path):
+                    return try bootstrap.bind(unixDomainSocketPath: path).wait()
+                }
+            }()
+
+            print("Server started and listening on \(channel.localAddress!)")
+
+        }
+        else
+        {
+            print("Mode: client")
+            let bootstrap = ClientBootstrap(group: group)
+                    // Enable SO_REUSEADDR.
+                    .channelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+                    .channelInitializer { channel in
+                        channel.pipeline.addHandler(TrafficHandler())
+                    }
+            defer {
+                try! group.syncShutdownGracefully()
+            }
+
+
+            let connectTarget: ConnectTo
+            switch (arg1, arg1.flatMap(Int.init), arg2.flatMap(Int.init)) {
+            case (.some(let h), _ , .some(let p)):
+                /* we got two arguments, let's interpret that as host and port */
+                connectTarget = .ip(host: h, port: p)
+            case (.some(let portString), .none, _):
+                /* couldn't parse as number, expecting unix domain socket path */
+                connectTarget = .unixDomainSocket(path: portString)
+            case (_, .some(let p), _):
+                /* only one argument --> port */
+                connectTarget = .ip(host: defaultHost, port: p)
+            default:
+                connectTarget = .ip(host: defaultHost, port: defaultPort)
+            }
+
+
+            let channel = try { () -> Channel in
+                switch connectTarget {
+                case .ip(let host, let port):
+                    return try bootstrap.connect(host: host, port: port).wait()
+                case .unixDomainSocket(let path):
+                    return try bootstrap.connect(unixDomainSocketPath: path).wait()
+                }
+            }()
+
+
+        }
+
+
+        let reader: (Data) -> Void = {
+            data in
+            //packetCount += 1
+            //print("packet count: \(packetCount)")
+            print("Number of bytes: \(data.count)")
+            print("Data: ")
+            _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+        }
+
+        if let tun = TunDevice(address: address, reader: reader) {
+
+            print("tun: \(tun)")
+
+            print(".")
+            if let result = tun.read(packetSize: 1500)
+            {
+                print("Result of read: \(result)")
+            }
+
+            let timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true, block: { timer in
+                print("✍️  Write Packet  ✍️")
+                print("Packet Bytes to Write: ")
+                _ = printDataBytes(bytes: packetBytes, hexDumpFormat: true, seperator: "", decimal: false)
+                tun.writeV4(packetBytes)
+            })
+
+        }
+    }
+
+
+
 
 }
 
-RunLoop.current.run()
+TunTesterCli.main()
+
+
+
+
+
+
+
+
+
+
+
+
+//RunLoop.current.run()
 
 
 

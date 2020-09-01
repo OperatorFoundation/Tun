@@ -2,12 +2,48 @@
   "object": {
     "pins": [
       {
+        "package": "Bits",
+        "repositoryURL": "https://github.com/OperatorFoundation/Bits.git",
+        "state": {
+          "branch": null,
+          "revision": "d6bdf981268cae74ac670b07b27602ac35fee77f",
+          "version": "1.0.5"
+        }
+      },
+      {
         "package": "Datable",
         "repositoryURL": "https://github.com/OperatorFoundation/Datable.git",
         "state": {
           "branch": null,
           "revision": "1c23f2b72d0d0cf4386fad05f8a5db4b91e8d304",
           "version": "3.0.2"
+        }
+      },
+      {
+        "package": "InternetProtocols",
+        "repositoryURL": "https://github.com/OperatorFoundation/InternetProtocols.git",
+        "state": {
+          "branch": null,
+          "revision": "07f3ef27293905aa34a3d031a581b4e610bd12b6",
+          "version": "1.0.9"
+        }
+      },
+      {
+        "package": "swift-argument-parser",
+        "repositoryURL": "https://github.com/apple/swift-argument-parser",
+        "state": {
+          "branch": null,
+          "revision": "15351c1cd009eba0b6e438bfef55ea9847a8dc4a",
+          "version": "0.3.0"
+        }
+      },
+      {
+        "package": "swift-nio",
+        "repositoryURL": "https://github.com/apple/swift-nio.git",
+        "state": {
+          "branch": null,
+          "revision": "5fc24345f92ec4c274121776c215ab0aa1ed4d50",
+          "version": "2.22.0"
         }
       }
     ]

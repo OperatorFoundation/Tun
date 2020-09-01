@@ -33,7 +33,7 @@ int TunC_O_RDWR()
 // Start 	sys/socket.h
 int TunC_SOCK_DGRAM()
 {
-	return SOCK_DGRAM;
+	return (int)SOCK_DGRAM;
 }
 
 int TunC_AF_INET()

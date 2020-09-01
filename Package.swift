@@ -18,6 +18,9 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.0.2"),
+        .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "1.0.9"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.22.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
         
     ],
     targets: [
@@ -31,10 +34,10 @@ let package = Package(
             dependencies: ["Datable", "TunC"]),
         .target(
             name: "TunTesterCli",
-            dependencies: ["Tun"]),
+            dependencies: ["Tun", "NIO", "ArgumentParser"]),
         .testTarget(
             name: "TunTests",
-            dependencies: ["Tun"]),
+            dependencies: ["Tun", "InternetProtocols"]),
     ],
     swiftLanguageVersions: [.v5]
 )
