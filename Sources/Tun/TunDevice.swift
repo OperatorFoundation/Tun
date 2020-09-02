@@ -115,8 +115,9 @@ public class TunDevice
         {
             return
         }
+        let tunQueue = DispatchQueue(label: "concurrentTunQueue", attributes: .concurrent)
 
-        guard let newSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: DispatchQueue.main) as? DispatchSource else
+        guard let newSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: tunQueue) as? DispatchSource else
         {
             return
         }
@@ -170,7 +171,7 @@ public class TunDevice
 
         let writeCount = write(tun_fd, &buffer, buffer.count )
 
-        print("writeCount: \(writeCount)")
+        print("TunDevice: writeCount: \(writeCount)")
         if writeCount < 0
         {
             let errorString = String(cString: strerror(errno))
@@ -242,7 +243,7 @@ public class TunDevice
 
     func handleRead()
     {
-        print("handle read")
+        print("TunDevice: handle read")
         while true
         {
             //FIXME: packet size is fixed!
