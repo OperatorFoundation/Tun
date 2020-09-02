@@ -402,16 +402,16 @@ public class TunDevice
             print("error: \(error)")
         }
 
-
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
         let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-
 
         let output = String(decoding: outputData, as: UTF8.self)
         let error = String(decoding: errorData, as: UTF8.self)
 
-        print("Output:\n\(output)\n")
-        print("Error:\n\(error)\n")
+        if output != "" || error != "" {
+            print("Output:\n\(output)\n")
+            print("Error:\n\(error)\n")
+        }
 
         return false
     }

@@ -104,7 +104,12 @@ private final class TrafficHandler: ChannelInboundHandler {
 
     public func channelActive(context: ChannelHandlerContext) {
         let remoteAddress = context.remoteAddress!
-        print( "Connected with address: \(remoteAddress)\n")
+        let channel = context.channel
+        print( "Connected with remote address: \(remoteAddress)\n")
+
+        var buffer = channel.allocator.buffer(capacity: 64)
+        buffer.writeString("Hello\n") //send some test data back
+        context.writeAndFlush(self.wrapOutboundOut(buffer), promise: nil)
 
     }
 
@@ -112,8 +117,6 @@ private final class TrafficHandler: ChannelInboundHandler {
         let remoteAddress = context.remoteAddress!
         print( "Disconnect with address: \(remoteAddress)\n")
     }
-
-
 
     public func errorCaught(context: ChannelHandlerContext, error: Error) {
         print("error: ", error)
@@ -132,7 +135,6 @@ public func takeData(data: NIOAny)
 
 struct TunTesterCli: ParsableCommand
 {
-
     static var configuration = CommandConfiguration(
             abstract: "Program to test Tun Library, implements simple VPN.",
             discussion: """
@@ -148,6 +150,8 @@ struct TunTesterCli: ParsableCommand
     @Option(name: [.short, .customLong("port")], default: 5555, help: "The TCP port. If server mode then it is the TCP port to listen on, if client mode then it is the TCP port of the server to connect to.") //fix with better examples
     var port: Int
 
+    @Option(name: [.short, .customLong("tun")], default: "", help: "The IPv4 address assigned to the tun interface. ") //fix with better examples
+    var tunAddress: String
 
     func validate() throws
     {
@@ -158,12 +162,17 @@ struct TunTesterCli: ParsableCommand
 
         if address.range(of: #"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"#, options: .regularExpression) == nil
         {
-            throw ValidationError("'\(address)' is not a valid IPv4 address.")
+            throw ValidationError("'\(address)' is not a valid IPv4 address for client or server.")
         }
 
+        if tunAddress != "" {
+            if tunAddress.range(of: #"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"#, options: .regularExpression) == nil {
+                throw ValidationError("'\(tunAddress)' is not a valid IPv4 address for the tun interface.")
+            }
+        }
 
     }
-    //public var packetCount = 0
+
     func run() throws
     {
 
@@ -171,8 +180,7 @@ struct TunTesterCli: ParsableCommand
         sleep(2)
 
         print("Hello, Operator.")
-        print("Address: \(address)")
-
+        print("Tunnel set to use address: \(address)")
 
         let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
 
@@ -187,17 +195,20 @@ struct TunTesterCli: ParsableCommand
             haveTunData = true
             //try! channel.writeAndFlush(data).wait()
         }
-        var tunAddress = ""
-        if server
-        {
-            tunAddress = "10.4.2.5"
-        }
-        else
-        {
-            tunAddress = "10.4.2.99"
+
+        var tunA = tunAddress
+        if tunA == "" {
+            print("Tun address parameter omitted, using default values")
+            if server {
+                tunA = "10.4.2.5"
+            } else {
+                tunA = "10.4.2.99"
+            }
         }
 
-        guard let tun  = TunDevice(address: tunAddress, reader: reader) else { return }
+        print("Setting tun interface address to: \(tunA)")
+
+        guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
         if server
         {
@@ -239,10 +250,9 @@ struct TunTesterCli: ParsableCommand
 
             print("Server started and listening on \(channel.localAddress!)")
 
-
-
-
-
+            //FIXME: tun doesn't work, however if the following line is commented out, tun works and tcp channel doesn't
+            try channel.closeFuture.wait()
+            //print("post closeFuture")
         }
         else
         {
@@ -271,6 +281,8 @@ struct TunTesterCli: ParsableCommand
                 }
             }()
 
+            //FIXME: similar to the above server functionality, either tun works or the tcp channel works. If the server is killed while client is connected then tun will start working.
+            try! channel.close().wait()
 
 
         }
@@ -287,12 +299,11 @@ struct TunTesterCli: ParsableCommand
 //            {
 //                print("got Tun data")
 //                haveTunData = false
-//
+//                //write data to the the tcp channel
 //            }
 //
 //        }
 
-        print("end")
 
     }
 
@@ -301,9 +312,10 @@ struct TunTesterCli: ParsableCommand
 
 }
 
-print("near end")
+
 TunTesterCli.main()
 RunLoop.current.run()
+
 
 
 
