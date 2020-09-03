@@ -1,8 +1,8 @@
 import Foundation
 import Tun
-import NIO
 import ArgumentParser
 import Dispatch
+import TransmissionLinux
 
 
 func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, decimal: Bool, enablePrinting: Bool = true) -> String
@@ -72,111 +72,53 @@ let packetBytes = Data(array: [
     0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b,    0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33,
     0x34, 0x35, 0x36, 0x37])
 
-//var haveData: Bool = false
-//var theData = Data()
-//
-//var haveTunData: Bool = false
-//var theTunData = Data()
-
-
-
-
-
-
-
-private final class TrafficHandler: ChannelInboundHandler {
-    public typealias InboundIn = ByteBuffer
-    public typealias OutboundOut = ByteBuffer
-
-    public var shuttle = DataShuttle()
-
-
-
-    public func writeDataFromTun(data: Data)
-    {
-        //context.writeAndFlush(self.wrapOutboundOut(read), promise: nil)
-    }
-
-    public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        //handles incoming data over the TCP connection
-        print("got tcp data")
-        let id = ObjectIdentifier(context.channel)
-        var read = self.unwrapInboundIn(data)
-        guard let bytes = read.readBytes(length: read.readableBytes) else { return }
-
-        var theData = Data(bytes)
-
-//        guard let tun = self.tunDevice else { return }
-//        tun.writeV4(theData)
-
-        //context.writeAndFlush(self.wrapOutboundOut(read), promise: nil)
-        shuttle.writeToTunDevice(bytes: theData)
-    }
-
-    // Flush it out. This can make use of gathering writes if multiple buffers are pending
-    public func channelReadComplete(context: ChannelHandlerContext) {
-        context.flush()
-    }
-
-    public func channelActive(context: ChannelHandlerContext) {
-        let remoteAddress = context.remoteAddress!
-        let channel = context.channel
-        print( "Connected with remote address: \(remoteAddress)\n")
-        shuttle.channel = channel
-        print(channel)
-
-//        var buffer = channel.allocator.buffer(capacity: 64)
-//        buffer.writeString("Hello\n") //send some test data backAAC
-//        context.writeAndFlush(self.wrapOutboundOut(buffer), promise: nil)
-
-    }
-
-    public func channelInactive(context: ChannelHandlerContext) {
-
-        let remoteAddress = context.remoteAddress!
-        print( "Disconnect with address: \(remoteAddress)\n")
-    }
-
-    public func errorCaught(context: ChannelHandlerContext, error: Error) {
-        print("error: ", error)
-
-        // As we are not really interested getting notified on success or failure we just pass nil as promise to
-        // reduce allocations.
-        context.close(promise: nil)
-    }
-}
-
-
-
 
 public struct DataShuttle
 {
-    public var channel: Channel?
+//    public var channel: Channel?
+//    public var channels: [ObjectIdentifier: Channel] = [:]
+//    public var channelID: ObjectIdentifier?
     public var tun: TunDevice?
+    public let timestamp = NSDate().timeIntervalSince1970
+
+
+    public func writeToChannelServer(bytes: Data)
+    {
+        print("Server write to channel:")
+        print("Shuttle ID: \(self.timestamp)")
+//        print("self.channels: \(self.channels)")
+//        print("self.channelID: \(self.channelID)")
+    }
+
+
+
 
     public func writeToChannel(bytes: Data)
     {
-        print("shuttle write channel, bytes:")
+        print("Shuttle ID: \(self.timestamp)")
+        //print("Channel: \(self.channel)")
+        print("Tun: \(self.tun)")
+        print("Shuttle write channel, bytes:")
         _ = printDataBytes(bytes: bytes, hexDumpFormat: true, seperator: "", decimal: false)
-        guard let channel = self.channel else { return }
-        print(channel)
-        if channel.isWritable {
-            print("shuttle try to write to ch")
-            var buffer = channel.allocator.buffer(capacity: bytes.count)
-            buffer.writeBytes(bytes)
-            try! channel.writeAndFlush(buffer)
-            print("shuttle post try to write to ch")
-        }
-
+//        guard let channel = self.channel else { return }
+//
+//        if channel.isWritable {
+//            print("Shuttle try to write to ch")
+//            var buffer = channel.allocator.buffer(capacity: bytes.count)
+//            buffer.writeBytes(bytes)
+//            try! channel.writeAndFlush(buffer)
+//            print("Shuttle post try to write to ch")
+//        }
 
         //channel.writeAndFlush(bytes)
 
-        print("shuttle end write channel")
+        print("Shuttle end write channel")
         //ch.writeAndFlush(ch.wrapOutboundOut(read), promise: nil)
     }
 
     public func writeToTunDevice(bytes: Data)
     {
+        print("Shuttle ID: \(timestamp)")
         print("shutle write tun, bytes:")
         _ = printDataBytes(bytes: bytes, hexDumpFormat: true, seperator: "", decimal: false)
         guard let tun = self.tun else { return }
@@ -186,17 +128,11 @@ public struct DataShuttle
 
     init()
     {
-        self.channel = nil
+        //self.channel = nil
         self.tun = nil
     }
 
 }
-
-
-//public func takeData(data: NIOAny)
-//{
-//    print("data: \(data)")
-//}
 
 
 struct TunTesterCli: ParsableCommand
@@ -248,23 +184,6 @@ struct TunTesterCli: ParsableCommand
         print("Hello, Operator.")
         print("Tunnel set to use address: \(address)")
 
-        let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
-
-        var shuttle = DataShuttle()
-
-        let reader: (Data) -> Void = {
-            data in
-            //packetCount += 1
-            //print("packet count: \(packetCount)")
-            print("Number of bytes: \(data.count)")
-            print("Data: ")
-            _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-            //theTunData = data
-            //haveTunData = true
-            //try! channel.writeAndFlush(data).wait()
-            shuttle.writeToChannel(bytes: data)
-        }
-
         var tunA = tunAddress
         if tunA == "" {
             print("Tun address parameter omitted, using default values")
@@ -277,119 +196,112 @@ struct TunTesterCli: ParsableCommand
 
         print("Setting tun interface address to: \(tunA)")
 
-        guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
-        shuttle.tun = tun
-
         if server
         {
             print("Mode: server")
+            let reader: (Data) -> Void = {
+                data in
+                //packetCount += 1
+                //print("packet count: \(packetCount)")
+                print("Number of bytes: \(data.count)")
+                print("Data: ")
+                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
+            }
 
+            guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
+            guard let listener = Listener(port: port) else { return }
 
-            var trafficHandler = TrafficHandler()
-            trafficHandler.shuttle = shuttle
-            let bootstrap = ServerBootstrap(group: group)
-                    // Specify backlog and enable SO_REUSEADDR for the server itself
-                    .serverChannelOption(ChannelOptions.backlog, value: 256)
-                    .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+            let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
 
+            guard let connection = listener.accept() else { return }
 
-                    // Set the handlers that are appled to the accepted Channels
-                    .childChannelInitializer { channel in
-                        // Ensure we don't read faster than we can write by adding the BackPressureHandler into the pipeline.
-                        channel.pipeline.addHandler(BackPressureHandler()).flatMap { v in
-                            channel.pipeline.addHandler(trafficHandler)
-                        }
+            networkToTunQueue.async
+            {
+                while true
+                {
+                    if let data = connection.read(size: 1500) {
+
+                        tun.writeV4(data)
+
+                    } else
+                    {
+                        break
                     }
 
-                    // Enable SO_REUSEADDR for the accepted Channels
-                    .childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
-                    .childChannelOption(ChannelOptions.maxMessagesPerRead, value: 16)
-                    .childChannelOption(ChannelOptions.recvAllocator, value: AdaptiveRecvByteBufferAllocator())
-            defer {
-                try! group.syncShutdownGracefully()
-            }
-
-            enum BindTo {
-                case ip(host: String, port: Int)
-            }
-
-            let bindTarget: BindTo
-            bindTarget = .ip(host: address, port: port)
-
-            let channel = try { () -> Channel in
-                switch bindTarget {
-                case .ip(let host, let port):
-                    return try bootstrap.bind(host: host, port: port).wait()
                 }
-            }()
-            //shuttle.channel = channel
-            print("Server started and listening on \(channel.localAddress!)")
+            }
+
+            while true
+            {
+                if let data = tun.read(packetSize: 1500)
+                {
+                    connection.write(data: data)
+                }
+
+            }
 
 
-            //channel.
 
-            //FIXME: tun doesn't work, however if the following line is commented out, tun works and tcp channel doesn't
-            //try shuttle.channel?.closeFuture.wait()
-            try channel.closeFuture.wait()
-            //print("post closeFuture")
+
         }
         else
         {
             print("Mode: client")
 
-            var trafficHandler = TrafficHandler()
-            trafficHandler.shuttle = shuttle
 
-            let bootstrap = ClientBootstrap(group: group)
-                    // Enable SO_REUSEADDR.
-                    .channelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
-                    .channelInitializer { channel in
-                        channel.pipeline.addHandler(trafficHandler)
+            let reader: (Data) -> Void = {
+                data in
+                //packetCount += 1
+                //print("packet count: \(packetCount)")
+                print("Number of bytes: \(data.count)")
+                print("Data: ")
+                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+
+                //shuttle.writeToChannel(bytes: data)
+            }
+
+
+            guard let tunMain  = TunDevice(address: tunA, reader: reader) else { return }
+
+
+            guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
+
+            guard let connection = Connection(host: address, port: port) else { return }
+
+            let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
+
+
+
+            networkToTunQueue.async
+            {
+                while true
+                {
+                    if let data = connection.read(size: 1500) {
+
+                        tun.writeV4(data)
+
+                    } else
+                    {
+                        break
                     }
-            defer {
-                try! group.syncShutdownGracefully()
-            }
 
-            enum ConnectTo {
-                case ip(host: String, port: Int)
-            }
-
-            let connectTarget: ConnectTo
-            connectTarget = .ip(host: address, port: port)
-
-            let channel = try { () -> Channel in
-                switch connectTarget {
-                case .ip(let host, let port):
-                    return try bootstrap.connect(host: host, port: port).wait()
                 }
-            }()
-            shuttle.channel = channel
-            //FIXME: similar to the above server functionality, either tun works or the tcp channel works. If the server is killed while client is connected then tun will start working.
-            try channel.closeFuture.wait()
-            //try shuttle.channel?.closeFuture.wait()
+            }
+
+            while true
+            {
+                if let data = tun.read(packetSize: 1500)
+                {
+                    connection.write(data: data)
+                }
+
+            }
+
 
 
         }
-
-//        while true {
-//            if haveData
-//            {
-//                print("got tunnel data")
-//                haveData = false
-//                tun.writeV4(theData)
-//            }
-//
-//            if haveTunData
-//            {
-//                print("got Tun data")
-//                haveTunData = false
-//                //write data to the the tcp channel
-//            }
-//
-//        }
-
 
     }
 

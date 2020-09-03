@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:5.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -19,7 +19,7 @@ let package = Package(
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.0.2"),
         .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "1.0.9"),
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.22.0"),
+        .package(url: "https://github.com/OperatorFoundation/Transmission.git", from: "0.0.3"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
         
     ],
@@ -34,7 +34,7 @@ let package = Package(
             dependencies: ["Datable", "TunC"]),
         .target(
             name: "TunTesterCli",
-            dependencies: ["Tun", "NIO", "ArgumentParser"]),
+            dependencies: ["Tun", .product(name: "TransmissionLinux", package: "Transmission"), .product(name: "ArgumentParser", package: "swift-argument-parser")]),
         .testTarget(
             name: "TunTests",
             dependencies: ["Tun", "InternetProtocols"]),

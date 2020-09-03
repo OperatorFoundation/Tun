@@ -11,6 +11,24 @@
         }
       },
       {
+        "package": "Socket",
+        "repositoryURL": "https://github.com/OperatorFoundation/BlueSocket",
+        "state": {
+          "branch": null,
+          "revision": "90212ea8b66787c2d51d03527a04748ba6ee7679",
+          "version": "1.1.0"
+        }
+      },
+      {
+        "package": "Chord",
+        "repositoryURL": "https://github.com/OperatorFoundation/Chord",
+        "state": {
+          "branch": null,
+          "revision": "3d0189b4f6e71441d82c577c0f583fceace47684",
+          "version": "0.0.5"
+        }
+      },
+      {
         "package": "Datable",
         "repositoryURL": "https://github.com/OperatorFoundation/Datable.git",
         "state": {
@@ -33,17 +51,26 @@
         "repositoryURL": "https://github.com/apple/swift-argument-parser",
         "state": {
           "branch": null,
-          "revision": "15351c1cd009eba0b6e438bfef55ea9847a8dc4a",
-          "version": "0.3.0"
+          "revision": "92646c0cdbaca076c8d3d0207891785b3379cbff",
+          "version": "0.3.1"
         }
       },
       {
-        "package": "swift-nio",
-        "repositoryURL": "https://github.com/apple/swift-nio.git",
+        "package": "SwiftQueue",
+        "repositoryURL": "https://github.com/OperatorFoundation/SwiftQueue",
         "state": {
           "branch": null,
-          "revision": "5fc24345f92ec4c274121776c215ab0aa1ed4d50",
-          "version": "2.22.0"
+          "revision": "0e5979acbb104516a427bb2bb09debc50ca100b4",
+          "version": "0.0.3"
+        }
+      },
+      {
+        "package": "Transmission",
+        "repositoryURL": "https://github.com/OperatorFoundation/Transmission.git",
+        "state": {
+          "branch": null,
+          "revision": "df8607af860f419999b33ff82aba3a74f59ded90",
+          "version": "0.0.3"
         }
       }
     ]
