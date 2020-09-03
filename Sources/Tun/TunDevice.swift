@@ -258,8 +258,8 @@ public class TunDevice
     
     public func read(packetSize: Int) -> Data?
     {
-        print("\n📚  Read called on TUN device. 📚")
-        print("Requested packet size is \(packetSize)\n")
+        //print("\n📚  Read called on TUN device. 📚")
+        //print("Requested packet size is \(packetSize)\n")
                 
         guard let source = maybeSource else
         {
