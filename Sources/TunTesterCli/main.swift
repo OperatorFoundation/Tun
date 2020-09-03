@@ -272,8 +272,6 @@ struct TunTesterCli: ParsableCommand
             }
 
 
-            guard let tunMain  = TunDevice(address: tunA, reader: reader) else { return }
-
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let connection = Connection(host: address, port: port) else { return }
