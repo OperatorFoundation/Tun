@@ -226,7 +226,7 @@ struct TunTesterCli: ParsableCommand
 
                     guard let sizeUint16 = sizeData.uint16 else { return }
                     let size = Int(sizeUint16)
-
+                    print("Server read size: \(size)")
                     if let data = connection.read(size: size) {
                         tun.writeV4(data)
                     }
@@ -307,6 +307,7 @@ struct TunTesterCli: ParsableCommand
                 {
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
+                    print("Client write size: \(dataSizeUInt16)")
                     connection.write(data: dataSizeUInt16.data)
                     connection.write(data: data)
                 }
