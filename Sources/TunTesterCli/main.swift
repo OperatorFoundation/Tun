@@ -3,6 +3,7 @@ import Tun
 import ArgumentParser
 import Dispatch
 import TransmissionLinux
+import Datable
 
 
 func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, decimal: Bool, enablePrinting: Bool = true) -> String
@@ -221,22 +222,30 @@ struct TunTesterCli: ParsableCommand
             {
                 while true
                 {
-                    if let data = connection.read(size: 1500) {
+                    guard let sizeData = connection.read(size: 2) else { return }
 
+                    guard let sizeUint16 = sizeData.uint16 else { return }
+                    let size = Int(sizeUint16)
+
+                    if let data = connection.read(size: size) {
                         tun.writeV4(data)
-
-                    } else
+                    }
+                    else
                     {
                         break
                     }
-
                 }
+
+
             }
 
             while true
             {
                 if let data = tun.read(packetSize: 1500)
                 {
+                    let dataSize = data.count
+                    let dataSizeUInt16 = UInt16(dataSize)
+                    connection.write(data: dataSizeUInt16.data)
                     connection.write(data: data)
                 }
 
@@ -265,7 +274,6 @@ struct TunTesterCli: ParsableCommand
 
             guard let tunMain  = TunDevice(address: tunA, reader: reader) else { return }
 
-
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let connection = Connection(host: address, port: port) else { return }
@@ -278,15 +286,18 @@ struct TunTesterCli: ParsableCommand
             {
                 while true
                 {
-                    if let data = connection.read(size: 1500) {
+                    guard let sizeData = connection.read(size: 2) else { return }
 
+                    guard let sizeUint16 = sizeData.uint16 else { return }
+                    let size = Int(sizeUint16)
+
+                    if let data = connection.read(size: size) {
                         tun.writeV4(data)
-
-                    } else
+                    }
+                    else
                     {
                         break
                     }
-
                 }
             }
 
@@ -294,12 +305,13 @@ struct TunTesterCli: ParsableCommand
             {
                 if let data = tun.read(packetSize: 1500)
                 {
+                    let dataSize = data.count
+                    let dataSizeUInt16 = UInt16(dataSize)
+                    connection.write(data: dataSizeUInt16.data)
                     connection.write(data: data)
                 }
 
             }
-
-
 
         }
 
