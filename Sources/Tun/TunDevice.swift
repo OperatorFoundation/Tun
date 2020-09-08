@@ -370,6 +370,7 @@ public class TunDevice
         do {
             try task.run()
             task.waitUntilExit()
+            print("done setting address")
         }
         catch {
             print("error: \(error)")
@@ -414,11 +415,13 @@ public class TunDevice
         {
             print("disabling net.ipv4.ip_forward")
             task.arguments = ["-w", "net.ipv4.ip_forward=0"]
+
         }
 
         do {
             try task.run()
             task.waitUntilExit()
+            print("done ip_forward")
         }
         catch {
             print("error: \(error)")
@@ -460,6 +463,7 @@ public class TunDevice
         do {
             try task.run()
             task.waitUntilExit()
+            print("done set client route")
         }
         catch {
             print("error: \(error)")
@@ -501,6 +505,7 @@ public class TunDevice
         do {
             try task.run()
             task.waitUntilExit()
+            print("done get nat")
         }
         catch {
             print("error: \(error)")
@@ -541,6 +546,7 @@ public class TunDevice
         do {
             try task.run()
             task.waitUntilExit()
+            print("done delete nat")
         }
         catch {
             print("error: \(error)")
@@ -585,6 +591,7 @@ public class TunDevice
         do {
             try task.run()
             task.waitUntilExit()
+            print("done config nat")
         }
         catch {
             print("error: \(error)")
