@@ -91,6 +91,7 @@ struct TunTesterCli: ParsableCommand
                         Server Example:
 
                         Client Example:
+                            sudo ./.build/debug/TunTesterCli -c 10.37.132.4
 
                         """)
 
@@ -191,7 +192,7 @@ struct TunTesterCli: ParsableCommand
             print("Mode: server")
             let reader: (Data) -> Void = {
                 data in
-                //print("Number of bytes: \(data.count)")
+                print("Tun RX bytes: \(data.count)")
                 //print("Data: ")
                 //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
@@ -200,7 +201,7 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             tun.setIPv4Forwarding(setTo: true)
-            tun.configServerNAT(serverPublicInterface: serverInternetInterface, deleteNAT: true)
+            //tun.configServerNAT(serverPublicInterface: serverInternetInterface, deleteNAT: true)
             tun.configServerNAT(serverPublicInterface: serverInternetInterface, deleteNAT: false)
 
             guard let listener = Listener(port: port) else { return }
@@ -255,6 +256,7 @@ struct TunTesterCli: ParsableCommand
             let reader: (Data) -> Void = {
                 data in
                 //print("Number of bytes: \(data.count)")
+                print("Tun RX bytes: \(data.count)")
                 //print("Data: ")
                 //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
             }

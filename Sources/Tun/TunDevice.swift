@@ -485,7 +485,7 @@ public class TunDevice
     {
         //add rule -- iptables -t nat -A POSTROUTING -j MASQUERADE -o enp0s5
         //delete rule -- iptables -t nat -D POSTROUTING -j MASQUERADE -o enp0s5
-        //show current NAT -- iptables -t nat -n -L
+        //show current NAT -- iptables -t nat -n -L -v
 
         let task = Process()
 
