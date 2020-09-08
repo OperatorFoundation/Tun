@@ -89,6 +89,7 @@ struct TunTesterCli: ParsableCommand
                         TunTesterCli can be invoked as either a server or a client. The client/server connection is TCP and forwards packets received on the tun interface over the TCP tunnel
 
                         Server Example:
+                            sudo ./.build/debug/TunTesterCli -s -c 10.37.132.4 -i enp0s5
 
                         Client Example:
                             sudo ./.build/debug/TunTesterCli -c 10.37.132.4
@@ -168,7 +169,6 @@ struct TunTesterCli: ParsableCommand
 
     func run() throws
     {
-
         print("Sleeping 2 seconds to allow debugger to attach to process...")
         sleep(2)
 
@@ -185,8 +185,6 @@ struct TunTesterCli: ParsableCommand
             }
         }
 
-
-
         if serverMode
         {
             print("Mode: server")
@@ -202,9 +200,8 @@ struct TunTesterCli: ParsableCommand
 
             tun.setIPv4Forwarding(setTo: true)
 
-            var result = false
-
             print("Deleting all NAT entries for \(serverInternetInterface)")
+            var result = false
             while !result {
                 result = tun.deleteServerNAT(serverPublicInterface: serverInternetInterface)
             }
@@ -216,8 +213,9 @@ struct TunTesterCli: ParsableCommand
             print("listner setup")
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
             print("queue setup")
+            print("listening for client")
             guard let connection = listener.accept() else { return }
-            print("accepting connections")
+            print("past connection")
             networkToTunQueue.async
             {
                 print("async block start")
@@ -238,8 +236,6 @@ struct TunTesterCli: ParsableCommand
                         break
                     }
                 }
-
-
             }
 
             print("entering while loop")
@@ -272,16 +268,20 @@ struct TunTesterCli: ParsableCommand
             }
 
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
+
             tun.setIPv4Forwarding(setTo: true)
-            //when in client mode add routing table entry
+
             guard let tunName = tun.maybeName else { return }
             tun.setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
             print("Route has been set")
-            guard let connection = Connection(host: tunAddressOfServer, port: port) else { return }
+
+
+            guard let connection = Connection(host: connectionAddress, port: port) else { return }
             print("Past connection")
 
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
             print("Queue setup")
+
             networkToTunQueue.async
             {
                 print("Starting async block")
