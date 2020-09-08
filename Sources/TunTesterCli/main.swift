@@ -78,9 +78,6 @@ func isValidIPv4Address(address: String) -> Bool
 }
 
 
-
-
-
 struct TunTesterCli: ParsableCommand
 {
     static var configuration = CommandConfiguration(
@@ -162,9 +159,7 @@ struct TunTesterCli: ParsableCommand
             {
                 throw ValidationError("'\(connectionAddress)' is not a valid IPv4 address for the connection address.")
             }
-
         }
-
     }
 
     func run() throws
@@ -193,7 +188,6 @@ struct TunTesterCli: ParsableCommand
                 print("Tun RX bytes: \(data.count)")
                 //print("Data: ")
                 //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-
             }
 
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
@@ -208,17 +202,14 @@ struct TunTesterCli: ParsableCommand
 
             tun.configServerNAT(serverPublicInterface: serverInternetInterface)
             print("Current NAT: \n\n\(tun.getNAT())\n\n")
-
             guard let listener = Listener(port: port) else { return }
-            print("listner setup")
-            let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
-            print("queue setup")
-            print("listening for client")
+            print("Listening for client")
             guard let connection = listener.accept() else { return }
-            print("past connection")
+            print("Connection established")
+
+            let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
             networkToTunQueue.async
             {
-                print("async block start")
                 while true
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
@@ -238,22 +229,18 @@ struct TunTesterCli: ParsableCommand
                 }
             }
 
-            print("entering while loop")
             while true
             {
                 if let data = tun.read(packetSize: 1500)
                 {
-                    print("Tun RX data:")
-                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-
+                    //print("Tun RX data:")
+                    //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
                     connection.write(data: dataSizeUInt16.data)
                     connection.write(data: data)
                 }
-
             }
-
         }
         else
         {
@@ -275,16 +262,12 @@ struct TunTesterCli: ParsableCommand
             tun.setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
             print("Route has been set")
 
-
             guard let connection = Connection(host: connectionAddress, port: port) else { return }
-            print("Past connection")
+            print("Connection established")
 
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
-            print("Queue setup")
-
             networkToTunQueue.async
             {
-                print("Starting async block")
                 while true
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
@@ -293,8 +276,8 @@ struct TunTesterCli: ParsableCommand
                     let size = Int(sizeUint16)
 
                     if let data = connection.read(size: size) {
-                        print("TCP RX data:")
-                        _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                        //print("TCP RX data:")
+                        //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
                         tun.writeV4(data)
                     }
@@ -305,13 +288,12 @@ struct TunTesterCli: ParsableCommand
                 }
             }
 
-            print("Starting main loop")
             while true
             {
                 if let data = tun.read(packetSize: 1500)
                 {
-                    print("Tun RX data:")
-                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                    //print("Tun RX data:")
+                    //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
@@ -319,23 +301,11 @@ struct TunTesterCli: ParsableCommand
                     connection.write(data: dataSizeUInt16.data)
                     connection.write(data: data)
                 }
-
             }
-
         }
-
     }
 }
 
 TunTesterCli.main()
 RunLoop.current.run()
-
-
-
-
-
-
-
-
-
 
