@@ -65,75 +65,20 @@ func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, decimal
 }
 
 
-let packetBytes = Data(array: [
-    0x45, 0x00, 0x00, 0x54, 0xc1, 0x88, 0x40, 0x00,    0x40, 0x01, 0x54, 0x64, 0x0a, 0x00, 0x08, 0x63,
-    0x0a, 0x00, 0x08, 0x5a, 0x08, 0x00, 0x2c, 0x79,    0x49, 0x35, 0x00, 0x05, 0x6e, 0xde, 0x47, 0x5f,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3c, 0x0d, 0x00,    0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13,
-    0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,    0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
-    0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b,    0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33,
-    0x34, 0x35, 0x36, 0x37])
-
-
-public struct DataShuttle
+func isValidIPv4Address(address: String) -> Bool
 {
-//    public var channel: Channel?
-//    public var channels: [ObjectIdentifier: Channel] = [:]
-//    public var channelID: ObjectIdentifier?
-    public var tun: TunDevice?
-    public let timestamp = NSDate().timeIntervalSince1970
-
-
-    public func writeToChannelServer(bytes: Data)
-    {
-        print("Server write to channel:")
-        print("Shuttle ID: \(self.timestamp)")
-//        print("self.channels: \(self.channels)")
-//        print("self.channelID: \(self.channelID)")
+    if address == "" { return false }
+    if address.range(of: #"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"#, options: .regularExpression) == nil {
+        return false //not a valid IP address
     }
-
-
-
-
-    public func writeToChannel(bytes: Data)
+    else
     {
-        print("Shuttle ID: \(self.timestamp)")
-        //print("Channel: \(self.channel)")
-        print("Tun: \(self.tun)")
-        print("Shuttle write channel, bytes:")
-        _ = printDataBytes(bytes: bytes, hexDumpFormat: true, seperator: "", decimal: false)
-//        guard let channel = self.channel else { return }
-//
-//        if channel.isWritable {
-//            print("Shuttle try to write to ch")
-//            var buffer = channel.allocator.buffer(capacity: bytes.count)
-//            buffer.writeBytes(bytes)
-//            try! channel.writeAndFlush(buffer)
-//            print("Shuttle post try to write to ch")
-//        }
-
-        //channel.writeAndFlush(bytes)
-
-        print("Shuttle end write channel")
-        //ch.writeAndFlush(ch.wrapOutboundOut(read), promise: nil)
+        return true //valid IP address
     }
-
-    public func writeToTunDevice(bytes: Data)
-    {
-        print("Shuttle ID: \(timestamp)")
-        print("shutle write tun, bytes:")
-        _ = printDataBytes(bytes: bytes, hexDumpFormat: true, seperator: "", decimal: false)
-        guard let tun = self.tun else { return }
-        tun.writeV4(bytes)
-        print("shuttle wrote tun")
-    }
-
-    init()
-    {
-        //self.channel = nil
-        self.tun = nil
-    }
-
 }
+
+
+
 
 
 struct TunTesterCli: ParsableCommand
@@ -142,36 +87,80 @@ struct TunTesterCli: ParsableCommand
             abstract: "Program to test Tun Library, implements simple VPN.",
             discussion: """
                         TunTesterCli can be invoked as either a server or a client. The client/server connection is TCP and forwards packets received on the tun interface over the TCP tunnel
+
+                        Server Example:
+
+                        Client Example:
+
                         """)
 
-    @Flag(name: [.short, .customLong("server")], help: "If the server flag is set (i.e. -s or --server) then TunTesterCli will run in server mode, if flag is omitted then it will run in client mode.")
-    var server = false
+    @Flag(name: [.short, .long], help: "If the server flag is set (i.e. -s or --server-mode) then TunTesterCli will run in server mode, if flag is omitted then it will run in client mode.")
+    var serverMode = false
 
-    @Option(name: [.short, .customLong("ip")], default: "127.0.0.1", help: "The IPv4 address. If server mode then it is the IP address to listen on, if client mode then it is the IP addrees of the server to connect to.") //fix with better examples
-    var address: String
+    @Option(name: [.short, .long], default: "127.0.0.1", help: "The IPv4 address. If server mode then it is the IP address to listen on, if client mode then it is the IP addrees of the server to connect to.") //fix with better examples
+    var connectionAddress: String
 
     @Option(name: [.short, .customLong("port")], default: 5555, help: "The TCP port. If server mode then it is the TCP port to listen on, if client mode then it is the TCP port of the server to connect to.") //fix with better examples
     var port: Int
 
-    @Option(name: [.short, .customLong("tun")], default: "", help: "The IPv4 address assigned to the tun interface. ") //fix with better examples
-    var tunAddress: String
+    @Option(name: [.short, .long], default: "", help: "The IPv4 address assigned to the local tun interface in server or client mode. (default: in server mode 10.4.2.1, client mode 10.4.2.100)") //fix with better examples
+    var localTunAddress: String
+
+    @Option(name: [.short, .long], default: "10.4.2.1", help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
+    var tunAddressOfServer: String
+
+    @Option(name: [.customShort("i"), .long], default: "", help: "Name of the server's network interface that is connected to the internet, eg enp0s5, eth0, wlan0, etc. Required for server mode.")
+    var serverInternetInterface: String
 
     func validate() throws
     {
+        //basic validation of parameters
+
         guard self.port > 0 && self.port <= 65535 else
         {
             throw ValidationError("The port must be between 1 and 65535. Use --help for more info.")
         }
 
-        if address.range(of: #"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"#, options: .regularExpression) == nil
+        if connectionAddress != "" && !isValidIPv4Address(address: connectionAddress)
         {
-            throw ValidationError("'\(address)' is not a valid IPv4 address for client or server.")
+            throw ValidationError("'\(connectionAddress)' is not a valid IPv4 address for client or server.")
         }
 
-        if tunAddress != "" {
-            if tunAddress.range(of: #"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"#, options: .regularExpression) == nil {
-                throw ValidationError("'\(tunAddress)' is not a valid IPv4 address for the tun interface.")
+
+        if localTunAddress != "" && !isValidIPv4Address(address: localTunAddress)
+        {
+            throw ValidationError("'\(localTunAddress)' is not a valid IPv4 address for the local tun interface.")
+        }
+
+        if serverMode
+        {
+            if serverInternetInterface != ""
+            {
+                if serverInternetInterface.range(of: #"^([[:digit:][:lower:]]{1,8})$"#, options: .regularExpression) == nil {
+                    throw ValidationError("'\(serverInternetInterface)' does not appear to be a valid interface name.")
+                }
+                else
+                {
+                    let fileManager = FileManager()
+                    let path = "/sys/class/net/" + serverInternetInterface
+                    if !fileManager.fileExists(atPath: path)
+                    {
+                        throw ValidationError("'\(serverInternetInterface)' interface does not seem to exist (\(path)).")
+                    }
+                }
             }
+            else
+            {
+                throw ValidationError("Server internet interface is required when running server mode.")
+            }
+        }
+        else
+        {
+            if !isValidIPv4Address(address: connectionAddress) // tun address of server to connect to
+            {
+                throw ValidationError("'\(connectionAddress)' is not a valid IPv4 address for the connection address.")
+            }
+
         }
 
     }
@@ -183,34 +172,36 @@ struct TunTesterCli: ParsableCommand
         sleep(2)
 
         print("Hello, Operator.")
-        print("Tunnel set to use address: \(address)")
+        print("Local tun address: \(localTunAddress)")
 
-        var tunA = tunAddress
+        var tunA = localTunAddress
         if tunA == "" {
             print("Tun address parameter omitted, using default values")
-            if server {
-                tunA = "10.4.2.5"
+            if serverMode {
+                tunA = "10.4.2.1"
             } else {
-                tunA = "10.4.2.99"
+                tunA = "10.4.2.100"
             }
         }
 
         print("Setting tun interface address to: \(tunA)")
 
-        if server
+        if serverMode
         {
             print("Mode: server")
             let reader: (Data) -> Void = {
                 data in
-                //packetCount += 1
-                //print("packet count: \(packetCount)")
-                print("Number of bytes: \(data.count)")
-                print("Data: ")
-                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                //print("Number of bytes: \(data.count)")
+                //print("Data: ")
+                //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
             }
 
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
+
+            tun.setIPv4Forwarding(setTo: true)
+            tun.configServerNAT(serverPublicInterface: serverInternetInterface, deleteNAT: true)
+            tun.configServerNAT(serverPublicInterface: serverInternetInterface, deleteNAT: false)
 
             guard let listener = Listener(port: port) else { return }
 
@@ -228,6 +219,8 @@ struct TunTesterCli: ParsableCommand
                     let size = Int(sizeUint16)
                     print("Server read size: \(size)")
                     if let data = connection.read(size: size) {
+                        print("TCP RX data:")
+                        _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                         tun.writeV4(data)
                     }
                     else
@@ -243,6 +236,9 @@ struct TunTesterCli: ParsableCommand
             {
                 if let data = tun.read(packetSize: 1500)
                 {
+                    print("Tun RX data:")
+                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
                     connection.write(data: dataSizeUInt16.data)
@@ -251,30 +247,26 @@ struct TunTesterCli: ParsableCommand
 
             }
 
-
-
-
         }
         else
         {
             print("Mode: client")
 
-
             let reader: (Data) -> Void = {
                 data in
-                //packetCount += 1
-                //print("packet count: \(packetCount)")
-                print("Number of bytes: \(data.count)")
-                print("Data: ")
-                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-
-                //shuttle.writeToChannel(bytes: data)
+                //print("Number of bytes: \(data.count)")
+                //print("Data: ")
+                //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
             }
 
-
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
+            tun.setIPv4Forwarding(setTo: true)
+            //when in client mode add routing table entry
+            guard let tunName = tun.maybeName else { return }
+            tun.setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
 
-            guard let connection = Connection(host: address, port: port) else { return }
+
+            guard let connection = Connection(host: localTunAddress, port: port) else { return }
 
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
 
@@ -290,6 +282,9 @@ struct TunTesterCli: ParsableCommand
                     let size = Int(sizeUint16)
 
                     if let data = connection.read(size: size) {
+                        print("TCP RX data:")
+                        _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+
                         tun.writeV4(data)
                     }
                     else
@@ -303,6 +298,9 @@ struct TunTesterCli: ParsableCommand
             {
                 if let data = tun.read(packetSize: 1500)
                 {
+                    print("Tun RX data:")
+                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
                     print("Client write size: \(dataSizeUInt16)")
@@ -315,12 +313,7 @@ struct TunTesterCli: ParsableCommand
         }
 
     }
-
-
-
-
 }
-
 
 TunTesterCli.main()
 RunLoop.current.run()

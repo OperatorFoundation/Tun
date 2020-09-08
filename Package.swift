@@ -21,7 +21,7 @@ let package = Package(
         .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "1.0.9"),
         .package(url: "https://github.com/OperatorFoundation/Transmission.git", from: "0.0.3"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
-        .package(url: "https://github.com/OperatorFoundation/Tun.git", from: "0.0.3"),
+
         
     ],
     targets: [

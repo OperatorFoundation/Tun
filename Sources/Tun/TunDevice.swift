@@ -13,22 +13,6 @@ import TunC
 
 //let X = TunC_X()
 
-/*
-//mac specific?
-    CTLIOCGINFO
-    UTUN_OPT_IFNAME
-    UTUN_CONTROL_NAME
-    PF_SYSTEM
-    SYSPROTO_CONTROL
-    UTUN_OPT_IFNAME
-    AF_SYSTEM
-    AF_SYS_CONTROL
-
-*/
-
-
-
-
 //if_tun.h 
 let IFF_TUN = TunC_IFF_TUN()
 let IFF_NO_PI = TunC_IFF_NO_PI()
@@ -51,15 +35,15 @@ let IFNAMSIZ = TuncC_IFNAMSIZ()
 let EAGAIN = TunC_EAGAIN()
 
 
-
 public class TunDevice
 {
     static let protocolNumberSize = 4
-    var maybeName: String?
+    public var maybeName: String?
     var maybeTun: Int32?
     var maybeSource: DispatchSource?
     let reader: (Data) -> Void
-    
+
+
     public init?(address: String, reader: @escaping (Data) -> Void)
     {
 
@@ -81,6 +65,7 @@ public class TunDevice
 
         startTunnel(fd: fd)
     }
+
 
     /// Create a TUN interface.
     func createInterface() -> Int32?
@@ -108,6 +93,7 @@ public class TunDevice
 
         return fd
     }
+
 
     func startTunnel(fd: Int32)
     {
@@ -138,6 +124,7 @@ public class TunDevice
         maybeSource = newSource
     }
 
+
     func setSocketNonBlocking(socket: Int32) -> Bool
     {
         let currentFlags = fcntl(socket, F_GETFL)
@@ -160,6 +147,7 @@ public class TunDevice
         return true
     }
 
+
     public func writeV4(_ packet: Data)
     {
         guard let tun_fd = maybeTun else
@@ -180,14 +168,11 @@ public class TunDevice
 
     }
 
-//    public func writeV4(_ packet: Data)
+
+//FIXME: update writeV6 for Linux
+//    public func writeV6(_ packet: Data)
 //    {
-//        guard let tun = maybeTun else
-//        {
-//            return
-//        }
-//
-//        let protocolNumber = AF_INET
+//        let protocolNumber = AF_INET6
 //        DatableConfig.endianess = .big
 //        var protocolNumberBuffer = protocolNumber.data
 //        var buffer = Data(packet)
@@ -198,52 +183,34 @@ public class TunDevice
 //                    iovec(iov_base: &buffer, iov_len: packet.count)
 //                ]
 //
+//        guard let tun = maybeTun else {
+//            return
+//        }
+//
 //        let writeCount = writev(tun, &iovecList, Int32(iovecList.count))
 //        if writeCount < 0
 //        {
 //            let errorString = String(cString: strerror(errno))
-//            print("Got an error while writing to utun: \(errorString)")
+//            print("Got an error while writing to tun: \(errorString)")
 //        }
 //    }
 
-    public func writeV6(_ packet: Data)
-    {
-        let protocolNumber = AF_INET6
-        DatableConfig.endianess = .big
-        var protocolNumberBuffer = protocolNumber.data
-        var buffer = Data(packet)
-
-        var iovecList =
-                [
-                    iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
-                    iovec(iov_base: &buffer, iov_len: packet.count)
-                ]
-
-        guard let tun = maybeTun else {
-            return
-        }
-
-        let writeCount = writev(tun, &iovecList, Int32(iovecList.count))
-        if writeCount < 0
-        {
-            let errorString = String(cString: strerror(errno))
-            print("Got an error while writing to tun: \(errorString)")
-        }
-    }
 
     func getIdentifier(socket: Int32) -> UInt32?
     {
         return 0
     }
 
+
     func getInterfaceName(fd: Int32) -> String?
     {
         return nil
     }
 
+
     func handleRead()
     {
-        print("TunDevice: handle read")
+        //print("TunDevice: handle read")
         while true
         {
             //FIXME: packet size is fixed!
@@ -255,7 +222,8 @@ public class TunDevice
             self.reader(data)
         }
     }
-    
+
+
     public func read(packetSize: Int) -> Data?
     {
         //print("\n📚  Read called on TUN device. 📚")
@@ -310,6 +278,7 @@ public class TunDevice
 //
 //        return socket;
 //    }
+
 
     func setAddress(interfaceName: String, addressString: String, subnetString: String) -> Bool
     {
@@ -383,6 +352,8 @@ public class TunDevice
         */
 
 
+
+
         let task = Process()
 
         let outputPipe = Pipe()
@@ -401,6 +372,7 @@ public class TunDevice
         }
         catch {
             print("error: \(error)")
+            return true
         }
 
         let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
@@ -418,21 +390,146 @@ public class TunDevice
     }
 
 
-
-    
-    func paddedArray(source: [Int8], targetSize: Int, padValue: Int8) -> [Int8]
+    public func setIPv4Forwarding(setTo: Bool) -> Bool
     {
-        var result: [Int8] = []
-        for item in source
-        {
-            result.append(item)
+        //set -- sysctl -w net.ipv4.ip_forward=1
+        //get -- sysctl net.ipv4.ip_forward
+
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/sysctl")
+
+        if setTo {
+            print("enabling net.ipv4.ip_forward")
+            task.arguments = ["-w", "net.ipv4.ip_forward=1"]
         }
-        
-        for _ in result.count..<targetSize
+        else
         {
-            result.append(padValue)
+            print("disabling net.ipv4.ip_forward")
+            task.arguments = ["-w", "net.ipv4.ip_forward=0"]
         }
-        
-        return result
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+        }
+        catch {
+            print("error: \(error)")
+            return true
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        print("ip_forward output: \(output)")
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if error != "" {
+            print("Error:\n\(error)\n")
+        }
+
+        return false
     }
+
+
+    public func setClientRoute(serverTunAddress: String, localTunName: String) -> Bool
+    {
+        //set -- route add default gw 10.4.2.5 tun0
+        //get -- netstat -r
+
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/route")
+
+        task.arguments = ["add", "default", "gw", serverTunAddress, localTunName]
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+        }
+        catch {
+            print("error: \(error)")
+            return true
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        print("set default route output: \(output)")
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if output != "" || error != "" {
+            print("Output:\n\(output)\n")
+            print("Error:\n\(error)\n")
+        }
+
+        return false
+    }
+
+
+    public func configServerNAT(serverPublicInterface: String, deleteNAT: Bool) -> Bool
+    {
+        //add rule -- iptables -t nat -A POSTROUTING -j MASQUERADE -o enp0s5
+        //delete rule -- iptables -t nat -D POSTROUTING -j MASQUERADE -o enp0s5
+        //show current NAT -- iptables -t nat -n -L
+
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/iptables")
+
+        if deleteNAT {
+            print("deleting NAT for \(serverPublicInterface)")
+            task.arguments = ["-t", "nat", "-D", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface]
+        }
+        else
+        {
+            print("enabling NAT for \(serverPublicInterface)")
+            task.arguments = ["-t", "nat", "-A", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface]
+        }
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+        }
+        catch {
+            print("error: \(error)")
+            return true
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        print("iptables NAT config output: \(output)")
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if output != "" || error != "" {
+            print("Output:\n\(output)\n")
+            print("Error:\n\(error)\n")
+        }
+
+        return false
+    }
+
+
 }
