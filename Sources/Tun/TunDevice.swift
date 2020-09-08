@@ -366,6 +366,7 @@ public class TunDevice
 
         task.arguments = [interfaceName, addressString, "netmask", subnetString]
 
+        print("Setting \(interfaceName) address to \(addressString) netmask \(subnetString)")
         do {
             try task.run()
             task.waitUntilExit()
@@ -428,7 +429,7 @@ public class TunDevice
         let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
 
         let output = String(decoding: outputData, as: UTF8.self)
-        print("ip_forward output: \(output)")
+        print(output)
         let error = String(decoding: errorData, as: UTF8.self)
 
         if error != "" {
@@ -472,7 +473,7 @@ public class TunDevice
         print("set default route output: \(output)")
         let error = String(decoding: errorData, as: UTF8.self)
 
-        if output != "" || error != "" {
+        if error != "" {
             print("Output:\n\(output)\n")
             print("Error:\n\(error)\n")
         }
@@ -480,8 +481,88 @@ public class TunDevice
         return false
     }
 
+    public func getNAT() -> String
+    {
 
-    public func configServerNAT(serverPublicInterface: String, deleteNAT: Bool) -> Bool
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/iptables")
+
+
+        task.arguments = ["-t", "nat", "-n", "-L", "-v"]
+
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+        }
+        catch {
+            print("error: \(error)")
+            return "error"
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        //print("iptables NAT config output: \(output)")
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if error != "" {
+
+            print("Error:\n\(error)\n")
+        }
+
+        return output
+
+
+    }
+
+
+    public func deleteServerNAT(serverPublicInterface: String) -> Bool
+    {
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/iptables")
+        task.arguments = ["-t", "nat", "-D", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface]
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+        }
+        catch {
+            print("error: \(error)")
+            return true
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        //print("iptables NAT config output: \(output)")
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if error != "" {
+            //print("Error:\n\(error)\n")
+            return true
+        }
+
+        return false
+    }
+
+    public func configServerNAT(serverPublicInterface: String) -> Bool
     {
         //add rule -- iptables -t nat -A POSTROUTING -j MASQUERADE -o enp0s5
         //delete rule -- iptables -t nat -D POSTROUTING -j MASQUERADE -o enp0s5
@@ -497,15 +578,9 @@ public class TunDevice
 
         task.executableURL = URL(fileURLWithPath: "/sbin/iptables")
 
-        if deleteNAT {
-            print("deleting NAT for \(serverPublicInterface)")
-            task.arguments = ["-t", "nat", "-D", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface]
-        }
-        else
-        {
-            print("enabling NAT for \(serverPublicInterface)")
-            task.arguments = ["-t", "nat", "-A", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface]
-        }
+        //print("enabling NAT for \(serverPublicInterface)")
+        task.arguments = ["-t", "nat", "-A", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface ]
+
 
         do {
             try task.run()
@@ -520,11 +595,10 @@ public class TunDevice
         let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
 
         let output = String(decoding: outputData, as: UTF8.self)
-        print("iptables NAT config output: \(output)")
+        //print("iptables NAT config output: \(output)")
         let error = String(decoding: errorData, as: UTF8.self)
 
-        if output != "" || error != "" {
-            print("Output:\n\(output)\n")
+        if error != "" {
             print("Error:\n\(error)\n")
         }
 

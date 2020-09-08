@@ -185,7 +185,7 @@ struct TunTesterCli: ParsableCommand
             }
         }
 
-        print("Setting tun interface address to: \(tunA)")
+
 
         if serverMode
         {
@@ -201,8 +201,16 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             tun.setIPv4Forwarding(setTo: true)
-            //tun.configServerNAT(serverPublicInterface: serverInternetInterface, deleteNAT: true)
-            tun.configServerNAT(serverPublicInterface: serverInternetInterface, deleteNAT: false)
+
+            var result = false
+
+            print("Deleting all NAT entries for \(serverInternetInterface)")
+            while !result {
+                result = tun.deleteServerNAT(serverPublicInterface: serverInternetInterface)
+            }
+
+            tun.configServerNAT(serverPublicInterface: serverInternetInterface)
+            print("Current NAT: \n\n\(tun.getNAT())\n\n")
 
             guard let listener = Listener(port: port) else { return }
 
@@ -212,6 +220,7 @@ struct TunTesterCli: ParsableCommand
 
             networkToTunQueue.async
             {
+                print("async block start")
                 while true
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
@@ -233,6 +242,7 @@ struct TunTesterCli: ParsableCommand
 
             }
 
+            print("entering while loop")
             while true
             {
                 if let data = tun.read(packetSize: 1500)
@@ -267,12 +277,10 @@ struct TunTesterCli: ParsableCommand
             guard let tunName = tun.maybeName else { return }
             tun.setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
 
-
             guard let connection = Connection(host: localTunAddress, port: port) else { return }
+            print("past connection")
 
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
-
-
 
             networkToTunQueue.async
             {
