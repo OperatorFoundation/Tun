@@ -213,11 +213,11 @@ struct TunTesterCli: ParsableCommand
             print("Current NAT: \n\n\(tun.getNAT())\n\n")
 
             guard let listener = Listener(port: port) else { return }
-
+            print("listner setup")
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
-
+            print("queue setup")
             guard let connection = listener.accept() else { return }
-
+            print("accepting connections")
             networkToTunQueue.async
             {
                 print("async block start")
@@ -276,14 +276,15 @@ struct TunTesterCli: ParsableCommand
             //when in client mode add routing table entry
             guard let tunName = tun.maybeName else { return }
             tun.setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
-
-            guard let connection = Connection(host: localTunAddress, port: port) else { return }
-            print("past connection")
+            print("Route has been set")
+            guard let connection = Connection(host: tunAddressOfServer, port: port) else { return }
+            print("Past connection")
 
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
-
+            print("Queue setup")
             networkToTunQueue.async
             {
+                print("Starting async block")
                 while true
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
@@ -304,6 +305,7 @@ struct TunTesterCli: ParsableCommand
                 }
             }
 
+            print("Starting main loop")
             while true
             {
                 if let data = tun.read(packetSize: 1500)
