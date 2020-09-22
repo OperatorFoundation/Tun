@@ -21,6 +21,8 @@ let package = Package(
         .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "1.0.9"),
         .package(url: "https://github.com/OperatorFoundation/Transmission.git", from: "0.0.3"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
+        .package(url: "https://github.com/OperatorFoundation/Flower.git", from: "0.1.0"),
+
 
         
     ],
@@ -35,7 +37,7 @@ let package = Package(
             dependencies: ["Datable", "TunC"]),
         .target(
             name: "TunTesterCli",
-            dependencies: ["Tun", .product(name: "TransmissionLinux", package: "Transmission"), .product(name: "ArgumentParser", package: "swift-argument-parser")]),
+            dependencies: ["Tun",  "Flower", .product(name: "TransmissionLinux", package: "Transmission"), .product(name: "ArgumentParser", package: "swift-argument-parser")]),
         .testTarget(
             name: "TunTests",
             dependencies: ["Tun", "InternetProtocols"]),

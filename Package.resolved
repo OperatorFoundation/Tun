@@ -38,6 +38,15 @@
         }
       },
       {
+        "package": "Flower",
+        "repositoryURL": "https://github.com/OperatorFoundation/Flower.git",
+        "state": {
+          "branch": null,
+          "revision": "70a2b9f43a9e0409bd17cd8d4fad1448f0e289db",
+          "version": "0.1.0"
+        }
+      },
+      {
         "package": "InternetProtocols",
         "repositoryURL": "https://github.com/OperatorFoundation/InternetProtocols.git",
         "state": {
@@ -47,12 +56,30 @@
         }
       },
       {
+        "package": "NetworkLinux",
+        "repositoryURL": "https://github.com/OperatorFoundation/NetworkLinux.git",
+        "state": {
+          "branch": null,
+          "revision": "d176e9fb287c7e574b09f6565e69860194ee8931",
+          "version": "0.1.0"
+        }
+      },
+      {
         "package": "swift-argument-parser",
         "repositoryURL": "https://github.com/apple/swift-argument-parser",
         "state": {
           "branch": null,
           "revision": "92646c0cdbaca076c8d3d0207891785b3379cbff",
           "version": "0.3.1"
+        }
+      },
+      {
+        "package": "SwiftHexTools",
+        "repositoryURL": "https://github.com/OperatorFoundation/SwiftHexTools",
+        "state": {
+          "branch": null,
+          "revision": "4ce4a4f66eea05c900d447af8c07ecaac720716c",
+          "version": "1.2.2"
         }
       },
       {
@@ -71,6 +98,15 @@
           "branch": null,
           "revision": "df8607af860f419999b33ff82aba3a74f59ded90",
           "version": "0.0.3"
+        }
+      },
+      {
+        "package": "Transport",
+        "repositoryURL": "https://github.com/OperatorFoundation/Transport",
+        "state": {
+          "branch": null,
+          "revision": "9013238d5e673330d4be46c7baa6a9ee25d770d6",
+          "version": "2.1.5"
         }
       }
     ]

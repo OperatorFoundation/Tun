@@ -280,8 +280,9 @@ public class TunDevice
 //    }
 
 
-    func setAddress(interfaceName: String, addressString: String, subnetString: String) -> Bool
+    public func setAddress(interfaceName: String, addressString: String, subnetString: String) -> Bool
     {
+        //FIXME: add ipv6 functionality
         /*
             notes on linux tun using strace
 
@@ -362,6 +363,7 @@ public class TunDevice
         task.standardOutput = outputPipe
         task.standardError = errorPipe
 
+        //FIXME: swap ifconfig with ip
         task.executableURL = URL(fileURLWithPath: "/sbin/ifconfig")
 
         task.arguments = [interfaceName, addressString, "netmask", subnetString]
@@ -385,6 +387,103 @@ public class TunDevice
 
         if output != "" || error != "" {
             print("Output:\n\(output)\n")
+            print("Error:\n\(error)\n")
+        }
+
+        return false
+    }
+
+
+    public func setAddressV6(interfaceName: String, addressString: String, subnetString: String) -> Bool
+    {
+        //FIXME: ipv6
+
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+
+        //ip -6 addr add fc00:bbbb:bbbb:bb01::1:b/64 dev tun0
+        task.executableURL = URL(fileURLWithPath: "/sbin/ip")
+
+        let CIDRAddress = addressString + "/" + subnetString
+        task.arguments = ["-6", "addr", "add", CIDRAddress, "dev", interfaceName]
+
+        print("Setting \(interfaceName) address to \(addressString) netmask \(subnetString)")
+        do {
+            try task.run()
+            task.waitUntilExit()
+            print("done setting address")
+        }
+        catch {
+            print("error: \(error)")
+            return true
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if output != "" || error != "" {
+            print("Output:\n\(output)\n")
+            print("Error:\n\(error)\n")
+        }
+
+        return false
+    }
+
+
+
+
+
+    public func setIPv6Forwarding(setTo: Bool) -> Bool
+    {
+        // sysctl -w net.ipv6.conf.all.forwarding=1
+
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/sysctl")
+
+        if setTo {
+            print("enabling net.ipv6.conf.all.forwarding")
+            task.arguments = ["-w", "net.ipv6.conf.all.forwarding=1"]
+        }
+        else
+        {
+            print("disabling net.ipv6.conf.all.forwarding")
+            task.arguments = ["-w", "net.ipv6.conf.all.forwarding=0"]
+        }
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            print("done ip_forward")
+        }
+        catch {
+            print("error: \(error)")
+            return true
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        print(output)
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if error != "" {
             print("Error:\n\(error)\n")
         }
 
@@ -443,10 +542,18 @@ public class TunDevice
     }
 
 
+    public func setClientRouteV6(serverTunAddress: String, localTunName: String) -> Bool
+    {
+        //FIXME: ipv6
+        return true
+    }
+
     public func setClientRoute(serverTunAddress: String, localTunName: String) -> Bool
     {
         //set -- route add default gw 10.4.2.5 tun0
         //get -- netstat -r
+
+        //sudo ip -6 route add fe80::f97e:48da:d889:cb22 dev tun0
 
         let task = Process()
 
@@ -483,6 +590,49 @@ public class TunDevice
         }
 
         return false
+    }
+
+
+    public func getNATv6() -> String
+    {
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/ip6tables")
+
+
+        task.arguments = ["-t", "nat", "-n", "-L", "-v"]
+
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            print("done get nat")
+        }
+        catch {
+            print("error: \(error)")
+            return "error"
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        //print("iptables NAT config output: \(output)")
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if error != "" {
+
+            print("Error:\n\(error)\n")
+        }
+
+        return output
+
     }
 
     public func getNAT() -> String
@@ -529,6 +679,45 @@ public class TunDevice
 
     }
 
+    public func deleteServerNATv6(serverPublicInterface: String) -> Bool
+    {
+        //ip6tables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/ip6tables")
+        task.arguments = ["-t", "nat", "-D", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface]
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            print("done delete nat")
+        }
+        catch {
+            print("error: \(error)")
+            return true
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        //print("iptables NAT config output: \(output)")
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if error != "" {
+            //print("Error:\n\(error)\n")
+            return true
+        }
+
+        return false
+
+    }
 
     public func deleteServerNAT(serverPublicInterface: String) -> Bool
     {
@@ -568,11 +757,57 @@ public class TunDevice
         return false
     }
 
+    public func configServerNATv6(serverPublicInterface: String) -> Bool
+    {
+        //add rule ipv6: ip6tables -t nat -A POSTROUTING -o enp0s5 -j MASQUERADE
+
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/ip6tables")
+
+        //print("enabling NAT for \(serverPublicInterface)")
+        task.arguments = ["-t", "nat", "-A", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface ]
+
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            print("done config nat")
+        }
+        catch {
+            print("error: \(error)")
+            return true
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        //print("iptables NAT config output: \(output)")
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if error != "" {
+            print("Error:\n\(error)\n")
+        }
+
+        return false
+    }
+
+
     public func configServerNAT(serverPublicInterface: String) -> Bool
     {
         //add rule -- iptables -t nat -A POSTROUTING -j MASQUERADE -o enp0s5
         //delete rule -- iptables -t nat -D POSTROUTING -j MASQUERADE -o enp0s5
         //show current NAT -- iptables -t nat -n -L -v
+
+        //FIXME: add ipv6 NAT functionality
+        //ipv6: ip6tables -t nat -A POSTROUTING -o enp0s5 -j MASQUERADE
 
         let task = Process()
 
@@ -612,5 +847,9 @@ public class TunDevice
         return false
     }
 
+    public func setDNS()
+    {
+        //FIXME:  add function(s) to set name servers / DNS servers
+    }
 
 }
