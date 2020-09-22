@@ -546,6 +546,11 @@ public class TunDevice
     {
         //FIXME: ipv6
         return true
+
+        
+
+
+
     }
 
     public func setClientRoute(serverTunAddress: String, localTunName: String) -> Bool

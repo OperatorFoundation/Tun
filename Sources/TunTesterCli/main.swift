@@ -129,10 +129,10 @@ struct TunTesterCli: ParsableCommand
     @Option(name: [.short, .long], default: "10.4.2.1", help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
     var tunAddressOfServer: String
 
-    @Option(name: [.short, .long], default: "", help: "The IPv4 address assigned to the local tun interface in server or client mode. (default: in server mode fc00:bbbb:bbbb:bb01::1:1, client mode fc00:bbbb:bbbb:bb01::1:b)") //fix with better examples
+    @Option(name: [.long], default: "", help: "The IPv4 address assigned to the local tun interface in server or client mode. (default: in server mode fc00:bbbb:bbbb:bb01::1:1, client mode fc00:bbbb:bbbb:bb01::1:b)") //fix with better examples
     var localTunAddressV6: String
 
-    @Option(name: [.short, .long], default: "fc00:bbbb:bbbb:bb01::1:1", help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
+    @Option(name: [.long], default: "fc00:bbbb:bbbb:bb01::1:1", help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
     var tunAddressOfServerV6: String
 
 
@@ -290,8 +290,8 @@ struct TunTesterCli: ParsableCommand
             {
                 if let data = tun.read(packetSize: 1500)
                 {
-                    //print("Tun RX data:")
-                    //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                    print("Tun RX data:")
+                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
                     connection.write(data: dataSizeUInt16.data)
@@ -313,10 +313,13 @@ struct TunTesterCli: ParsableCommand
 
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
+            guard let tunName = tun.maybeName else { return }
+            tun.setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetString: "64")
+
             tun.setIPv4Forwarding(setTo: true)
             tun.setIPv6Forwarding(setTo: true)
 
-            guard let tunName = tun.maybeName else { return }
+
             tun.setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
             print("ipv4 route has been set")
 
@@ -338,8 +341,8 @@ struct TunTesterCli: ParsableCommand
                     let size = Int(sizeUint16)
 
                     if let data = connection.read(size: size) {
-                        //print("TCP RX data:")
-                        //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                        print("TCP RX data:")
+                        _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
                         tun.writeV4(data)
                     }
@@ -354,8 +357,8 @@ struct TunTesterCli: ParsableCommand
             {
                 if let data = tun.read(packetSize: 1500)
                 {
-                    //print("Tun RX data:")
-                    //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                    print("Tun RX data:")
+                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
