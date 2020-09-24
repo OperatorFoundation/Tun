@@ -148,15 +148,16 @@ public class TunDevice
     }
 
 
-    public func writeV4(_ packet: Data)
+    public func writeV4(_ packet: Data) -> Int
     {
         guard let tun_fd = maybeTun else
         {
-            return
+            return -1
         }
 
         var buffer = [UInt8](packet)
 
+        print(buffer)
         let writeCount = write(tun_fd, &buffer, buffer.count )
 
         print("TunDevice: writeCount: \(writeCount)")
@@ -165,7 +166,7 @@ public class TunDevice
             let errorString = String(cString: strerror(errno))
             print("Got an error while writing to tun: \(errorString)")
         }
-
+        return writeCount
     }
 
 
@@ -544,10 +545,48 @@ public class TunDevice
 
     public func setClientRouteV6(serverTunAddress: String, localTunName: String) -> Bool
     {
-        //FIXME: ipv6
-        return true
+//set -- route add default gw 10.4.2.5 tun0
+        //get -- netstat -r
 
-        
+        //sudo ip -6 route add fe80::f97e:48da:d889:cb22 dev tun0
+        //ip -6 route add default dev eth0 metric 1
+
+        let task = Process()
+
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+
+        task.standardOutput = outputPipe
+        task.standardError = errorPipe
+
+        task.executableURL = URL(fileURLWithPath: "/sbin/ip")
+
+        task.arguments = ["-6", "route", "add", "default", "dev", localTunName, "metric", "1"]
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            print("done set client route")
+        }
+        catch {
+            print("error: \(error)")
+            return true
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+
+        let output = String(decoding: outputData, as: UTF8.self)
+        print("set default ipv6 route output: \(output)")
+        let error = String(decoding: errorData, as: UTF8.self)
+
+        if error != "" {
+            print("Output:\n\(output)\n")
+            print("Error:\n\(error)\n")
+        }
+
+        return false
+
 
 
 
