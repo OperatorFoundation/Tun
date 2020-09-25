@@ -22,9 +22,8 @@ let package = Package(
         .package(url: "https://github.com/OperatorFoundation/Transmission.git", from: "0.0.3"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
         .package(url: "https://github.com/OperatorFoundation/Flower.git", from: "0.1.0"),
+        .package(url: "https://github.com/OperatorFoundation/Routing.git", from: "0.0.1"),
 
-
-        
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -34,10 +33,10 @@ let package = Package(
             dependencies: []),
         .target(
             name: "Tun",
-            dependencies: ["Datable", "TunC"]),
+            dependencies: ["Datable", "TunC", "Routing"]),
         .target(
             name: "TunTesterCli",
-            dependencies: ["Tun",  "Flower", .product(name: "TransmissionLinux", package: "Transmission"), .product(name: "ArgumentParser", package: "swift-argument-parser")]),
+            dependencies: ["Tun", "Routing", "Flower", .product(name: "TransmissionLinux", package: "Transmission"), .product(name: "ArgumentParser", package: "swift-argument-parser")]),
         .testTarget(
             name: "TunTests",
             dependencies: ["Tun", "InternetProtocols"]),

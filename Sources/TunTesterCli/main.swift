@@ -5,6 +5,7 @@ import Dispatch
 import TransmissionLinux
 import Datable
 import Flower
+import Routing
 
 
 func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, decimal: Bool, enablePrinting: Bool = true) -> String
@@ -235,28 +236,28 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let tunName = tun.maybeName else { return }
-            tun.setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
+            setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
 
-            tun.setIPv4Forwarding(setTo: true)
-            tun.setIPv6Forwarding(setTo: true)
+            setIPv4Forwarding(setTo: true)
+            setIPv6Forwarding(setTo: true)
 
             print("Deleting all ipv4 NAT entries for \(serverInternetInterface)")
             var result4 = false
             while !result4 {
-                result4 = tun.deleteServerNAT(serverPublicInterface: serverInternetInterface)
+                result4 = deleteServerNAT(serverPublicInterface: serverInternetInterface)
             }
 
             print("Deleting all ipv6 NAT entries for \(serverInternetInterface)")
             var result6 = false
             while !result6 {
-                result6 = tun.deleteServerNATv6(serverPublicInterface: serverInternetInterface)
+                result6 = deleteServerNATv6(serverPublicInterface: serverInternetInterface)
             }
 
-            tun.configServerNAT(serverPublicInterface: serverInternetInterface)
-            print("Current ipv4 NAT: \n\n\(tun.getNAT())\n\n")
+            configServerNAT(serverPublicInterface: serverInternetInterface)
+            print("Current ipv4 NAT: \n\n\(getNAT())\n\n")
 
-            tun.configServerNATv6(serverPublicInterface: serverInternetInterface)
-            print("Current ipv6 NAT: \n\n\(tun.getNATv6())\n\n")
+            configServerNATv6(serverPublicInterface: serverInternetInterface)
+            print("Current ipv6 NAT: \n\n\(getNATv6())\n\n")
 
 
             guard let listener = Listener(port: port) else { return }
@@ -320,16 +321,16 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let tunName = tun.maybeName else { return }
-            tun.setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
+            setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
 
-            tun.setIPv4Forwarding(setTo: true)
-            tun.setIPv6Forwarding(setTo: true)
+            setIPv4Forwarding(setTo: true)
+            setIPv6Forwarding(setTo: true)
 
 
-            tun.setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
+            setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
             print("ipv4 route has been set")
 
-            tun.setClientRouteV6(serverTunAddress: tunAddressOfServerV6, localTunName: tunName)
+            setClientRouteV6(serverTunAddress: tunAddressOfServerV6, localTunName: tunName)
             print("ipv6 route has been set")
 
 
