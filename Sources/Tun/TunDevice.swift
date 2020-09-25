@@ -43,7 +43,6 @@ public class TunDevice
     var maybeSource: DispatchSource?
     let reader: (Data) -> Void
 
-
     public init?(address: String, reader: @escaping (Data) -> Void)
     {
 
@@ -63,7 +62,7 @@ public class TunDevice
         guard let interfaceName = self.maybeName else { return nil }
         setAddress(interfaceName: interfaceName, addressString: address, subnetString: "255.255.255.0")
 
-        startTunnel(fd: fd)
+        startTunnel(fd: fd, packetSize: 1500)
     }
 
 
@@ -95,7 +94,7 @@ public class TunDevice
     }
 
 
-    func startTunnel(fd: Int32)
+    func startTunnel(fd: Int32, packetSize: Int)
     {
         if !setSocketNonBlocking(socket: fd)
         {
@@ -116,7 +115,7 @@ public class TunDevice
 
         newSource.setEventHandler
         {
-            self.handleRead()
+            self.handleRead(packetSize: packetSize)
         }
 
         newSource.resume()
@@ -148,8 +147,10 @@ public class TunDevice
     }
 
 
-    public func writeV4(_ packet: Data) -> Int
+    public func writeBytes(_ packet: Data) -> Int
     {
+        //function writes raw bytes to tun interface, supporting both IPv4 and IPv6 (this is untested but tun should also support other layer 3 protocols)
+        //returns the number of bytes written to the interface or a value < 0 for errors
         guard let tun_fd = maybeTun else
         {
             return -1
@@ -166,56 +167,37 @@ public class TunDevice
             let errorString = String(cString: strerror(errno))
             print("Got an error while writing to tun: \(errorString)")
         }
+
+        if writeCount != buffer.count
+        {
+            print("Bytes written do not match bytes in buffer")
+            return -2
+        }
+
         return writeCount
     }
 
 
-//FIXME: update writeV6 for Linux
-//    public func writeV6(_ packet: Data)
-//    {
-//        let protocolNumber = AF_INET6
-//        DatableConfig.endianess = .big
-//        var protocolNumberBuffer = protocolNumber.data
-//        var buffer = Data(packet)
-//
-//        var iovecList =
-//                [
-//                    iovec(iov_base: &protocolNumberBuffer, iov_len: TunDevice.protocolNumberSize),
-//                    iovec(iov_base: &buffer, iov_len: packet.count)
-//                ]
-//
-//        guard let tun = maybeTun else {
-//            return
-//        }
-//
-//        let writeCount = writev(tun, &iovecList, Int32(iovecList.count))
-//        if writeCount < 0
-//        {
-//            let errorString = String(cString: strerror(errno))
-//            print("Got an error while writing to tun: \(errorString)")
-//        }
-//    }
-
-
     func getIdentifier(socket: Int32) -> UInt32?
     {
+        //FIXME: remove this function or change to return proper value
         return 0
     }
 
 
     func getInterfaceName(fd: Int32) -> String?
     {
-        return nil
+        //FIXME: consider removing since self.maybeName returns the same value
+        return self.maybeName
     }
 
 
-    func handleRead()
+    func handleRead(packetSize: Int)
     {
         //print("TunDevice: handle read")
         while true
         {
-            //FIXME: packet size is fixed!
-            guard let (data) = self.read(packetSize: 1500) else
+            guard let (data) = self.read(packetSize: packetSize) else
             {
                 return
             }
@@ -283,7 +265,7 @@ public class TunDevice
 
     public func setAddress(interfaceName: String, addressString: String, subnetString: String) -> Bool
     {
-        //FIXME: add ipv6 functionality
+        //FIXME: move/add input validation from TunTesterCli to TunDevice
         /*
             notes on linux tun using strace
 
@@ -353,9 +335,6 @@ public class TunDevice
 
         */
 
-
-
-
         let task = Process()
 
         let outputPipe = Pipe()
@@ -395,9 +374,9 @@ public class TunDevice
     }
 
 
-    public func setAddressV6(interfaceName: String, addressString: String, subnetString: String) -> Bool
+    public func setAddressV6(interfaceName: String, addressString: String, subnetPrefix: UInt8) -> Bool
     {
-        //FIXME: ipv6
+        //FIXME: should add input validation
 
         let task = Process()
 
@@ -411,10 +390,10 @@ public class TunDevice
         //ip -6 addr add fc00:bbbb:bbbb:bb01::1:b/64 dev tun0
         task.executableURL = URL(fileURLWithPath: "/sbin/ip")
 
-        let CIDRAddress = addressString + "/" + subnetString
+        let CIDRAddress = addressString + "/" + subnetPrefix.string
         task.arguments = ["-6", "addr", "add", CIDRAddress, "dev", interfaceName]
 
-        print("Setting \(interfaceName) address to \(addressString) netmask \(subnetString)")
+        print("Setting \(interfaceName) address to \(addressString) netmask \(subnetPrefix)")
         do {
             try task.run()
             task.waitUntilExit()
@@ -438,9 +417,6 @@ public class TunDevice
 
         return false
     }
-
-
-
 
 
     public func setIPv6Forwarding(setTo: Bool) -> Bool
@@ -545,8 +521,7 @@ public class TunDevice
 
     public func setClientRouteV6(serverTunAddress: String, localTunName: String) -> Bool
     {
-//set -- route add default gw 10.4.2.5 tun0
-        //get -- netstat -r
+        //FIXME: add input checking
 
         //sudo ip -6 route add fe80::f97e:48da:d889:cb22 dev tun0
         //ip -6 route add default dev eth0 metric 1
@@ -586,10 +561,6 @@ public class TunDevice
         }
 
         return false
-
-
-
-
     }
 
     public func setClientRoute(serverTunAddress: String, localTunName: String) -> Bool
@@ -607,6 +578,7 @@ public class TunDevice
         task.standardOutput = outputPipe
         task.standardError = errorPipe
 
+        //FIXME: change route command to ip  command
         task.executableURL = URL(fileURLWithPath: "/sbin/route")
 
         task.arguments = ["add", "default", "gw", serverTunAddress, localTunName]
@@ -649,9 +621,7 @@ public class TunDevice
 
         task.executableURL = URL(fileURLWithPath: "/sbin/ip6tables")
 
-
         task.arguments = ["-t", "nat", "-n", "-L", "-v"]
-
 
         do {
             try task.run()
@@ -676,12 +646,11 @@ public class TunDevice
         }
 
         return output
-
     }
+
 
     public func getNAT() -> String
     {
-
         let task = Process()
 
         let outputPipe = Pipe()
@@ -692,9 +661,7 @@ public class TunDevice
 
         task.executableURL = URL(fileURLWithPath: "/sbin/iptables")
 
-
         task.arguments = ["-t", "nat", "-n", "-L", "-v"]
-
 
         do {
             try task.run()
@@ -719,9 +686,8 @@ public class TunDevice
         }
 
         return output
-
-
     }
+
 
     public func deleteServerNATv6(serverPublicInterface: String) -> Bool
     {
@@ -760,8 +726,8 @@ public class TunDevice
         }
 
         return false
-
     }
+
 
     public func deleteServerNAT(serverPublicInterface: String) -> Bool
     {
@@ -801,6 +767,7 @@ public class TunDevice
         return false
     }
 
+
     public func configServerNATv6(serverPublicInterface: String) -> Bool
     {
         //add rule ipv6: ip6tables -t nat -A POSTROUTING -o enp0s5 -j MASQUERADE
@@ -817,7 +784,6 @@ public class TunDevice
 
         //print("enabling NAT for \(serverPublicInterface)")
         task.arguments = ["-t", "nat", "-A", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface ]
-
 
         do {
             try task.run()
@@ -850,9 +816,6 @@ public class TunDevice
         //delete rule -- iptables -t nat -D POSTROUTING -j MASQUERADE -o enp0s5
         //show current NAT -- iptables -t nat -n -L -v
 
-        //FIXME: add ipv6 NAT functionality
-        //ipv6: ip6tables -t nat -A POSTROUTING -o enp0s5 -j MASQUERADE
-
         let task = Process()
 
         let outputPipe = Pipe()
@@ -865,7 +828,6 @@ public class TunDevice
 
         //print("enabling NAT for \(serverPublicInterface)")
         task.arguments = ["-t", "nat", "-A", "POSTROUTING", "-j", "MASQUERADE", "-o", serverPublicInterface ]
-
 
         do {
             try task.run()

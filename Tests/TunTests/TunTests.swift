@@ -58,17 +58,17 @@ final class TunTests: XCTestCase
         let dataToSend = hexToSend.hexadecimal!
         
        // printDataBytes(bytes: dataToSend, hexDumpFormat: true, seperator: "", decimal: false)
-        tun.writeV4(dataToSend)
+        tun.writeBytes(dataToSend)
         sleep(1)
-        tun.writeV4(dataToSend)
+        tun.writeBytes(dataToSend)
         sleep(1)
-        tun.writeV4(dataToSend)
+        tun.writeBytes(dataToSend)
         sleep(1)
-        tun.writeV4(dataToSend)
+        tun.writeBytes(dataToSend)
         sleep(1)
-        tun.writeV4(dataToSend)
+        tun.writeBytes(dataToSend)
         sleep(1)
-        tun.writeV4(dataToSend)
+        tun.writeBytes(dataToSend)
         sleep(1)
         
     }

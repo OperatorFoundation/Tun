@@ -235,7 +235,7 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let tunName = tun.maybeName else { return }
-            tun.setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetString: "64")
+            tun.setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
 
             tun.setIPv4Forwarding(setTo: true)
             tun.setIPv6Forwarding(setTo: true)
@@ -264,6 +264,7 @@ struct TunTesterCli: ParsableCommand
             guard let connection = listener.accept() else { return }
             print("Connection established")
 
+
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
             networkToTunQueue.async
             {
@@ -277,7 +278,7 @@ struct TunTesterCli: ParsableCommand
                     if let data = connection.read(size: size) {
                         print("TCP RX data:")
                         _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-                        let bytesWritten = tun.writeV4(data)
+                        let bytesWritten = tun.writeBytes(data)
                         if bytesWritten != sizeUint16
                         {
                             print("tun write size mismatch!!s")
@@ -319,7 +320,7 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let tunName = tun.maybeName else { return }
-            tun.setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetString: "64")
+            tun.setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
 
             tun.setIPv4Forwarding(setTo: true)
             tun.setIPv6Forwarding(setTo: true)
@@ -335,6 +336,19 @@ struct TunTesterCli: ParsableCommand
             guard let connection = Connection(host: connectionAddress, port: port) else { return }
             print("Connection established")
 
+//            connection.readMessages
+//            {
+//                message in
+//
+//                switch message
+//                {
+//                case .IPDataV4(let data):
+//                    print("Received an IPv4 packet")
+//                case .IPDataV6(let data):
+//                    print("Receieved an IPv6 packet")
+//                }
+//            }
+
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
             networkToTunQueue.async
             {
@@ -349,7 +363,7 @@ struct TunTesterCli: ParsableCommand
                         print("TCP RX data:")
                         _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
-                        tun.writeV4(data)
+                        tun.writeBytes(data)
                     }
                     else
                     {
