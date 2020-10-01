@@ -173,15 +173,30 @@ public class TunDevice
             if writeCount < 0 {
                 let errorString = String(cString: strerror(errno))
                 print("Got an error while writing to tun: \(errorString)")
+                print("errno: \(errno)")
+                print("bytes left: \(bytesLeft))")
+                print("bytes attempted to write:")
+                print(buffer[totalBytesWritten..<buffer.count])
+
+
+
                 if errno != EAGAIN
                 {
                     return -1
                 }
+                else if errno == EINVAL
+                {
+                    if fcntl(tun_fd, F_GETFD) != -1 || errno != EBADF
+                    {
+                        print("File descriptor invalid!!")
+                    }
 
-            } else if writeCount != bytesToWrite {
-//            print("Bytes written do not match bytes in buffer")
+                }
 
+            } else {
+//            print("Bytes written do not match bytes in buffer"
                 totalBytesWritten += writeCount
+
 
             }
         }
