@@ -272,7 +272,8 @@ struct TunTesterCli: ParsableCommand
                 while true
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
-
+                    print("sizeData: ")
+                    _ = printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false)
                     guard let sizeUint16 = sizeData.uint16 else { return }
                     let size = Int(sizeUint16)
                     print("Server read size: \(size)")
@@ -381,6 +382,7 @@ struct TunTesterCli: ParsableCommand
                     _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
                     let dataSize = data.count
+                    print("Client dataSize: \(dataSize)")
                     let dataSizeUInt16 = UInt16(dataSize)
                     print("Client write size: \(dataSizeUInt16)")
                     connection.write(data: dataSizeUInt16.data)

@@ -36,6 +36,65 @@ let IFNAMSIZ = TuncC_IFNAMSIZ()
 let EAGAIN = TunC_EAGAIN()
 
 
+
+func printDataBytes(bytes: Data, hexDumpFormat: Bool, seperator: String, decimal: Bool, enablePrinting: Bool = true) -> String
+{
+    var returnString: String = ""
+    if hexDumpFormat
+    {
+        var count = 0
+        var newLine: Bool = true
+        for byte in bytes
+        {
+            if newLine
+            {
+                if enablePrinting { print("・ ", terminator: "") }
+                newLine = false
+            }
+            if enablePrinting { print(String(format: "%02x", byte), terminator: " ") }
+            returnString += String(format: "%02x", byte)
+            returnString += " "
+            count += 1
+            if count % 8 == 0
+            {
+                if enablePrinting { print(" ", terminator: "") }
+                returnString += " "
+            }
+            if count % 16 == 0
+            {
+                if enablePrinting { print("") }
+                returnString += "\n"
+                newLine = true
+            }
+        }
+    }
+    else
+    {
+        var i = 0
+        for byte in bytes
+        {
+            if decimal
+            {
+                if enablePrinting { print(String(format: "%u", byte), terminator: "") }
+                returnString += String(format: "%u", byte)
+            }
+            else
+            {
+                if enablePrinting { print(String(format: "%02x", byte), terminator: "") }
+                returnString += String(format: "%02x", byte)
+            }
+            i += 1
+            if i < bytes.count
+            {
+                if enablePrinting { print(seperator, terminator: "") }
+                returnString += seperator
+            }
+        }
+    }
+    if enablePrinting { print("") }
+    return returnString
+}
+
 public class TunDevice
 {
     static let protocolNumberSize = 4
@@ -161,23 +220,24 @@ public class TunDevice
 
         var buffer = [UInt8](packet)
         let bytesToWrite = buffer.count
-        print(buffer)
+        //print(buffer)
 
         while totalBytesWritten < bytesToWrite
         {
             let bytesLeft = bytesToWrite - totalBytesWritten
 
             let writeCount = write(tun_fd, &buffer[totalBytesWritten..<buffer.count], bytesLeft)
-
             print("TunDevice: writeCount: \(writeCount)")
             if writeCount < 0 {
                 let errorString = String(cString: strerror(errno))
                 print("Got an error while writing to tun: \(errorString)")
                 print("errno: \(errno)")
-                print("bytes left: \(bytesLeft))")
+                let hexfmt = String(format: "%02x", bytesLeft)
+                print("bytes left: \(bytesLeft), hex: \(hexfmt)")
                 print("bytes attempted to write:")
-                print(buffer[totalBytesWritten..<buffer.count])
+                //print(buffer[totalBytesWritten..<buffer.count])
 
+                printDataBytes(bytes: Data(buffer[totalBytesWritten..<buffer.count]), hexDumpFormat: true, seperator: "", decimal: false)
 
 
                 if errno != EAGAIN
