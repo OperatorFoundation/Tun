@@ -151,30 +151,42 @@ public class TunDevice
     {
         //function writes raw bytes to tun interface, supporting both IPv4 and IPv6 (this is untested but tun should also support other layer 3 protocols)
         //returns the number of bytes written to the interface or a value < 0 for errors
+
+        var totalBytesWritten = 0
+
         guard let tun_fd = maybeTun else
         {
             return -1
         }
 
         var buffer = [UInt8](packet)
-
+        let bytesToWrite = buffer.count
         print(buffer)
-        let writeCount = write(tun_fd, &buffer, buffer.count )
 
-        print("TunDevice: writeCount: \(writeCount)")
-        if writeCount < 0
+        while totalBytesWritten < bytesToWrite
         {
-            let errorString = String(cString: strerror(errno))
-            print("Got an error while writing to tun: \(errorString)")
+            let bytesLeft = bytesToWrite - totalBytesWritten
+
+            let writeCount = write(tun_fd, &buffer[totalBytesWritten..<buffer.count], bytesLeft)
+
+            print("TunDevice: writeCount: \(writeCount)")
+            if writeCount < 0 {
+                let errorString = String(cString: strerror(errno))
+                print("Got an error while writing to tun: \(errorString)")
+                if errno != EAGAIN
+                {
+                    return -1
+                }
+
+            } else if writeCount != bytesToWrite {
+//            print("Bytes written do not match bytes in buffer")
+
+                totalBytesWritten += writeCount
+
+            }
         }
 
-        if writeCount != buffer.count
-        {
-            print("Bytes written do not match bytes in buffer")
-            return -2
-        }
-
-        return writeCount
+        return 0
     }
 
 

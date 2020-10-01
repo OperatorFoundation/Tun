@@ -280,10 +280,10 @@ struct TunTesterCli: ParsableCommand
                         print("TCP RX data:")
                         _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                         let bytesWritten = tun.writeBytes(data)
-                        if bytesWritten != sizeUint16
+                        if bytesWritten != 0
                         {
-                            print("tun write size mismatch!!s")
-                            break
+                            print("error writing to tun")
+                            //break
                         }
                     }
                     else
