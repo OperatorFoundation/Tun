@@ -304,12 +304,12 @@ struct TunTesterCli: ParsableCommand
                     {
                         guard let sizeUint16 = sizeData.uint16 else { return }
                         let size = Int(sizeUint16)
-                        //print("🔥🍌👇 Server read size: \(size)")
+                        print("🔥🍌👇 received read size: \(size)")
                         if let data = connection.read(size: size) {
                             //print("🔥🍌👇 TCP RX data:")
                             //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                             let bytesWritten = tun.writeBytes(data)
-                            //print("🔥😺👆 bytesWritten: \(bytesWritten)")
+                            print("🔥😺👆 bytesWritten: \(bytesWritten)")
 
                             if bytesWritten != 0
                             {
@@ -339,7 +339,7 @@ struct TunTesterCli: ParsableCommand
                 if let data = tun.read(packetSize: 1500)
                 {
                     countTUN += 1
-                    print("\n\n🔥😺👇 Tun Count: \(countTUN)")
+                    print("\n\n🔥😺👇 tun rx packet Count: \(countTUN)")
                     //print("🔥😺👇 Tun RX data:")
                     //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                     let dataSize = data.count
@@ -352,7 +352,7 @@ struct TunTesterCli: ParsableCommand
         else
         {
 
-            print("❄Mode: client")
+            print("❄ Mode: client")
 
             let reader: (Data) -> Void = {
                 data in
@@ -407,6 +407,7 @@ struct TunTesterCli: ParsableCommand
                     _ = printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false)
 
                     countTCP += 1
+                    print("\n\n❄🍌👇 TCP RX count: \(countTCP)")
 
                     if sizeData.count == 0
                     {
@@ -423,29 +424,36 @@ struct TunTesterCli: ParsableCommand
                         break
                         abort()
                     }
+                    
+                    if sizeData.count == 2 {
+                        guard let sizeUint16 = sizeData.uint16 else {
+                            return
+                        }
+                        let size = Int(sizeUint16)
 
-                    print("\n\n❄🍌👇 Count TCP RX: \(countTCP)")
-                    guard let sizeUint16 = sizeData.uint16 else { return }
-                    let size = Int(sizeUint16)
+                        if let data = connection.read(size: size) {
+                            print("❄🍌👇 TCP RX data:")
+                            _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
-                    if let data = connection.read(size: size) {
-                        print("❄🍌👇 TCP RX data:")
-                        _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                            let bytesWritten = tun.writeBytes(data)
+                            print("❄😺👆 tun write return value: \(bytesWritten)")
 
-                        let bytesWritten = tun.writeBytes(data)
-                        print("❄😺👆 tun write return value: \(bytesWritten)")
-
-                        if bytesWritten != 0
-                        {
-                            tunErrorCount += 1
-                            print("❄😺👆 error writing to tun. # \(tunErrorCount)")
-                            //break
+                            if bytesWritten != 0 {
+                                tunErrorCount += 1
+                                print("❄😺👆 error writing to tun. # \(tunErrorCount)")
+                                //break
+                            }
+                        } else {
+                            break
                         }
                     }
                     else
                     {
-                        break
+                        print("🔥🍌👇 ERROR    TCP RX size byte count wrong, too many bytes")
                     }
+
+
+
                 }
             }
 
