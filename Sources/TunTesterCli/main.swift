@@ -231,7 +231,7 @@ struct TunTesterCli: ParsableCommand
         if serverMode
         {
             //[TX][RX]
-            print("[S]Mode: server")
+            print("[S] Mode: server")
             let reader: (Data) -> Void = {
                 data in
             }
@@ -420,7 +420,7 @@ struct TunTesterCli: ParsableCommand
 
                     countTCP += 1
                     print("[C][CHA][RX] TCP packets received: \(countTCP)")
-                    
+
                     if sizeData.count > 2
                     {
                         if sizeData[2] == 0x60 || sizeData[2] == 0x45
@@ -438,7 +438,7 @@ struct TunTesterCli: ParsableCommand
                             {
                                 tunWriteCount += 1
                                 let bytesWritten = tun.writeBytes(dataParsed)
-                                print("[S][TUN][TX]-\(tunWriteCount) tun write return value: \(bytesWritten)")
+                                print("[C][TUN][TX]-\(tunWriteCount) tun write return value: \(bytesWritten)")
                             }
                         }
                     }
@@ -475,14 +475,14 @@ struct TunTesterCli: ParsableCommand
 
                                 if data.count != size
                                 {
-                                    print("[S] ERROR tried to receive \(size) bytes, instead got \(data.count) bytes")
-                                    print("[S] bytes received:")
+                                    print("[C] ERROR tried to receive \(size) bytes, instead got \(data.count) bytes")
+                                    print("[C] bytes received:")
                                     _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                                 }
 
                                 tunWriteCount += 1
                                 let bytesWritten = tun.writeBytes(data)
-                                print("[S][TUN][TX]-\(tunWriteCount) tun write return value: \(bytesWritten)")
+                                print("[C][TUN][TX]-\(tunWriteCount) tun write return value: \(bytesWritten)")
 
                                 if bytesWritten != 0
                                 {
@@ -510,7 +510,7 @@ struct TunTesterCli: ParsableCommand
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
                     countSendTCP += 1
-                    print("[S][CHA][TX]-\(countSendTCP) send \(dataSizeUInt16) bytes over TCP channel")
+                    print("[C][CHA][TX]-\(countSendTCP) send \(dataSizeUInt16) bytes over TCP channel")
                     connection.write(data: dataSizeUInt16.data)
                     connection.write(data: data)
                 }
