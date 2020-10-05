@@ -228,6 +228,11 @@ public class TunDevice
 
             let writeCount = write(tun_fd, &buffer[totalBytesWritten..<buffer.count], bytesLeft)
             print("TunDevice: writeCount: \(writeCount)")
+            print("bytes attempted to write:")
+            printDataBytes(bytes: Data(buffer[totalBytesWritten..<buffer.count]), hexDumpFormat: true, seperator: "", decimal: false)
+
+
+
             if writeCount < 0 {
                 let errorString = String(cString: strerror(errno))
                 print("Got an error while writing to tun: \(errorString)")

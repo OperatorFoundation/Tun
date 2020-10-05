@@ -105,8 +105,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Transmission.git",
         "state": {
           "branch": null,
-          "revision": "12d109553dbfe3dba17b21bb4a214e53115d1291",
-          "version": "0.1.3"
+          "revision": "df8607af860f419999b33ff82aba3a74f59ded90",
+          "version": "0.0.3"
         }
       },
       {
