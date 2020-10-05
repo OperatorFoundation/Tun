@@ -215,6 +215,7 @@ public class TunDevice
 
         guard let tun_fd = maybeTun else
         {
+            print("🛠 problem with tun fd, unable to unwrap")
             return -1
         }
 
@@ -226,43 +227,37 @@ public class TunDevice
         {
             let bytesLeft = bytesToWrite - totalBytesWritten
 
-            let writeCount = write(tun_fd, &buffer[totalBytesWritten..<buffer.count], bytesLeft)
-            print("TunDevice: writeCount: \(writeCount)")
-            print("bytes attempted to write:")
-            printDataBytes(bytes: Data(buffer[totalBytesWritten..<buffer.count]), hexDumpFormat: true, seperator: "", decimal: false)
-
-
+            var choppedBuffer = buffer[totalBytesWritten..<buffer.count]
+            let writeCount = write(tun_fd, &choppedBuffer, bytesLeft)
+            print("🛠 TunDevice: writeCount: \(writeCount)")
+            print("🛠 Bytes TunDevice attempted to write:")
+            printDataBytes(bytes: Data(choppedBuffer), hexDumpFormat: true, seperator: "", decimal: false)
 
             if writeCount < 0 {
                 let errorString = String(cString: strerror(errno))
-                print("Got an error while writing to tun: \(errorString)")
-                print("errno: \(errno)")
+                print("🛠 Got an error while writing to tun: \(errorString)")
+                print("🛠 errno: \(errno)")
                 let hexfmt = String(format: "%02x", bytesLeft)
-                print("bytes left: \(bytesLeft), hex: \(hexfmt)")
-                print("bytes attempted to write:")
-                //print(buffer[totalBytesWritten..<buffer.count])
-
-                printDataBytes(bytes: Data(buffer[totalBytesWritten..<buffer.count]), hexDumpFormat: true, seperator: "", decimal: false)
-
+                print("🛠 bytes left: \(bytesLeft), hex: \(hexfmt)")
+                print("🛠 bytes attempted to write:")
+                printDataBytes(bytes: Data(choppedBuffer), hexDumpFormat: true, seperator: "", decimal: false)
 
                 if errno != EAGAIN
                 {
+                    print("🛠 EAGAIN")
                     return -1
                 }
                 else if errno == EINVAL
                 {
                     if fcntl(tun_fd, F_GETFD) != -1 || errno != EBADF
                     {
-                        print("File descriptor invalid!!")
+                        print("🛠 File descriptor invalid!!")
                     }
-
                 }
 
             } else {
-//            print("Bytes written do not match bytes in buffer"
                 totalBytesWritten += writeCount
-
-
+                print("🛠 totalBytesWritten: \(totalBytesWritten)")
             }
         }
 

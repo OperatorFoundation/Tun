@@ -96,7 +96,13 @@ func isValidIPv6Address(address: String) -> Bool
     }
 }
 
-
+let packetBytes = Data(array: [
+    0x45, 0x00, 0x00, 0x54, 0xc1, 0x88, 0x40, 0x00,    0x40, 0x01, 0x54, 0x64, 0x0a, 0x00, 0x08, 0x63,
+    0x0a, 0x00, 0x08, 0x5a, 0x08, 0x00, 0x2c, 0x79,    0x49, 0x35, 0x00, 0x05, 0x6e, 0xde, 0x47, 0x5f,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x3c, 0x0d, 0x00,    0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13,
+    0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,    0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
+    0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b,    0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33,
+    0x34, 0x35, 0x36, 0x37])
 
 
 
@@ -225,10 +231,11 @@ struct TunTesterCli: ParsableCommand
 
         if serverMode
         {
+            //👆👇
             print("🔥Mode: server")
             let reader: (Data) -> Void = {
                 data in
-                print("🔥😺Tun RX bytes: \(data.count)")
+                print("🔥😺👇 Tun RX bytes: \(data.count)")
                 //print("Data: ")
                 //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
             }
@@ -241,29 +248,29 @@ struct TunTesterCli: ParsableCommand
             setIPv4Forwarding(setTo: true)
             setIPv6Forwarding(setTo: true)
 
-            print("🔥Deleting all ipv4 NAT entries for \(serverInternetInterface)")
+            print("🔥 Deleting all ipv4 NAT entries for \(serverInternetInterface)")
             var result4 = false
             while !result4 {
                 result4 = deleteServerNAT(serverPublicInterface: serverInternetInterface)
             }
 
-            print("🔥Deleting all ipv6 NAT entries for \(serverInternetInterface)")
+            print("🔥 Deleting all ipv6 NAT entries for \(serverInternetInterface)")
             var result6 = false
             while !result6 {
                 result6 = deleteServerNATv6(serverPublicInterface: serverInternetInterface)
             }
 
             configServerNAT(serverPublicInterface: serverInternetInterface)
-            print("🔥Current ipv4 NAT: \n\n\(getNAT())\n\n")
+            print("🔥 Current ipv4 NAT: \n\n\(getNAT())\n\n")
 
             configServerNATv6(serverPublicInterface: serverInternetInterface)
-            print("🔥Current ipv6 NAT: \n\n\(getNATv6())\n\n")
+            print("🔥 Current ipv6 NAT: \n\n\(getNATv6())\n\n")
 
 
             guard let listener = Listener(port: port) else { return }
-            print("🔥🍌Listening for client")
+            print("🔥🍌 Listening for client")
             guard let connection = listener.accept() else { return }
-            print("🔥🍌Connection established")
+            print("🔥🍌 Connection established")
 
 
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
@@ -271,33 +278,59 @@ struct TunTesterCli: ParsableCommand
             {
                 var countTCP = 0
                 var tunErrorCount = 0
+                var zeroByteCount = 0
                 while true
                 {
+
                     guard let sizeData = connection.read(size: 2) else { return }
                     countTCP += 1
-                    print("🔥🍌Count TCP RX: \(countTCP))")
-                    print("🔥🍌sizeData: ")
+                    print("🔥🍌👇 Count TCP RX: \(countTCP)")
+                    print("🔥🍌👇 sizeData: ")
                     _ = printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false)
-                    guard let sizeUint16 = sizeData.uint16 else { return }
-                    let size = Int(sizeUint16)
-                    print("🔥🍌Server read size: \(size)")
-                    if let data = connection.read(size: size) {
-                        print("🔥🍌TCP RX data:")
-                        _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-                        let bytesWritten = tun.writeBytes(data)
-                        print("🔥😺bytesWritten: \(bytesWritten)")
+                    if sizeData.count == 0
+                    {
+                        zeroByteCount += 1
+                    }
+                    else
+                    {
+                        zeroByteCount = 0
+                    }
 
-                        if bytesWritten != 0
+                    if zeroByteCount > 1
+                    {
+                        break
+                    }
+
+                    if sizeData.count == 2
+                    {
+                        guard let sizeUint16 = sizeData.uint16 else { return }
+                        let size = Int(sizeUint16)
+                        print("🔥🍌👇 Server read size: \(size)")
+                        if let data = connection.read(size: size) {
+                            print("🔥🍌👇 TCP RX data:")
+                            _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                            let bytesWritten = tun.writeBytes(data)
+                            print("🔥😺👆 bytesWritten: \(bytesWritten)")
+
+                            if bytesWritten != 0
+                            {
+                                tunErrorCount += 1
+                                print("🔥😺👆 error writing to tun. # \(tunErrorCount)")
+                                //break
+                            }
+                        }
+                        else
                         {
-                            tunErrorCount += 1
-                            print("🔥😺error writing to tun. # \(tunErrorCount)")
-                            //break
+                            print("break")
+                            break
+                            abort()
                         }
                     }
                     else
                     {
-                        break
+                        print("🔥🍌👇 ERROR    TCP RX size byte count wrong, too many bytes")
                     }
+
                 }
             }
 
@@ -307,8 +340,8 @@ struct TunTesterCli: ParsableCommand
                 if let data = tun.read(packetSize: 1500)
                 {
                     countTUN += 1
-                    print("🔥😺Tun Count: \(countTUN)")
-                    print("🔥😺Tun RX data:")
+                    print("🔥😺👇 Tun Count: \(countTUN)")
+                    print("🔥😺👇 Tun RX data:")
                     _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
@@ -325,7 +358,7 @@ struct TunTesterCli: ParsableCommand
             let reader: (Data) -> Void = {
                 data in
                 //print("Number of bytes: \(data.count)")
-                print("❄😺Tun RX bytes: \(data.count)")
+                print("❄😺👇 Tun RX bytes: \(data.count)")
                 //print("Data: ")
                 //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
             }
@@ -340,14 +373,14 @@ struct TunTesterCli: ParsableCommand
 
 
             setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
-            print("❄ipv4 route has been set")
+            print("❄ ipv4 route has been set")
 
             setClientRouteV6(serverTunAddress: tunAddressOfServerV6, localTunName: tunName)
-            print("❄ipv6 route has been set")
+            print("❄ ipv6 route has been set")
 
 
             guard let connection = Connection(host: connectionAddress, port: port) else { return }
-            print("❄🍌Connection established")
+            print("❄🍌 Connection established")
 
 //            connection.readMessages
 //            {
@@ -367,25 +400,43 @@ struct TunTesterCli: ParsableCommand
             {
                 var countTCP = 0
                 var tunErrorCount = 0
+                var zeroByteCount = 0
                 while true
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
                     countTCP += 1
-                    print("❄🍌Count TCP RX: \(countTCP))")
+
+                    if sizeData.count == 0
+                    {
+                        zeroByteCount += 1
+                    }
+                    else
+                    {
+                        zeroByteCount = 0
+                    }
+
+                    if zeroByteCount > 1
+                    {
+                        print("break")
+                        break
+                        abort()
+                    }
+
+                    print("❄🍌👇 Count TCP RX: \(countTCP)")
                     guard let sizeUint16 = sizeData.uint16 else { return }
                     let size = Int(sizeUint16)
 
                     if let data = connection.read(size: size) {
-                        print("❄🍌TCP RX data:")
+                        print("❄🍌👇 TCP RX data:")
                         _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
                         let bytesWritten = tun.writeBytes(data)
-                        print("❄😺bytesWritten: \(bytesWritten)")
+                        print("❄😺👆 bytesWritten: \(bytesWritten)")
 
                         if bytesWritten != 0
                         {
                             tunErrorCount += 1
-                            print("❄😺error writing to tun. # \(tunErrorCount)")
+                            print("❄😺👆 error writing to tun. # \(tunErrorCount)")
                             //break
                         }
                     }
@@ -396,21 +447,22 @@ struct TunTesterCli: ParsableCommand
                 }
             }
 
+            var countTUN = 0
             while true
             {
-                var countTUN = 0
+
                 if let data = tun.read(packetSize: 1500)
                 {
                     countTUN += 1
-                    print("❄😺Tun Count: \(countTUN)")
+                    print("❄😺👇 Tun Count: \(countTUN)")
 
-                    print("❄😺Tun RX data:")
+                    print("❄😺👇 Tun RX data:")
                     _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
                     let dataSize = data.count
-                    print("❄🍌Client dataSize: \(dataSize)")
+                    print("❄🍌👆 Client dataSize: \(dataSize)")
                     let dataSizeUInt16 = UInt16(dataSize)
-                    print("❄🍌Client write size: \(dataSizeUInt16)")
+                    print("❄🍌👆 Client write size: \(dataSizeUInt16)")
                     connection.write(data: dataSizeUInt16.data)
                     connection.write(data: data)
                 }
