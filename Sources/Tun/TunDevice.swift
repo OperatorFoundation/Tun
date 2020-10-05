@@ -219,7 +219,7 @@ public class TunDevice
             return -1
         }
 
-        print("🛠 TunDevice file descriptor: \(tun_fd)")
+        //print("🛠 TunDevice file descriptor: \(tun_fd)")
         var buffer = [UInt8](packet)
         let bytesToWrite = buffer.count
         //print(buffer)
@@ -228,12 +228,12 @@ public class TunDevice
         {
             let bytesLeft = bytesToWrite - totalBytesWritten
             var choppedBuffer = [UInt8](Data(buffer[totalBytesWritten..<buffer.count]))
-            print("🛠 bytesLeft: \(bytesLeft)")
+            //print("🛠 bytesLeft: \(bytesLeft)")
             //print("🛠 &choppedBuffer \(&choppedBuffer)")
             let writeCount = write(tun_fd, &choppedBuffer, bytesLeft)
-            print("🛠 TunDevice: writeCount: \(writeCount)")
-            print("🛠 Bytes TunDevice attempted to write:")
-            printDataBytes(bytes: Data(choppedBuffer), hexDumpFormat: true, seperator: "", decimal: false)
+            print("🛠 write's returned value: \(writeCount)")
+            //print("🛠 Bytes TunDevice attempted to write:")
+            //printDataBytes(bytes: Data(choppedBuffer), hexDumpFormat: true, seperator: "", decimal: false)
 
             if writeCount < 0 {
                 let errorString = String(cString: strerror(errno))
