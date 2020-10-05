@@ -289,7 +289,26 @@ struct TunTesterCli: ParsableCommand
 
                     if sizeData.count > 2
                     {
-                        print("❄🍌👇 ERROR    TCP RX size byte count wrong, too many bytes")
+                        print("🔥🍌👇 ERROR    TCP RX size byte count wrong, too many bytes")
+                        if sizeData[2] == 0x60 || sizeData[2] == 0x45
+                        {
+                            var sizeDataParsed = sizeData[0..<2]
+                            var dataParsed = sizeData[2..<sizeData.count]
+
+                            guard let sizeUint16 = sizeDataParsed.uint16 else {
+                                return
+                            }
+                            let size = Int(sizeUint16)
+
+                            if size == dataParsed.count
+                            {
+                                let bytesWritten = tun.writeBytes(dataParsed)
+                                print("🔥😺👆 tun write return value: \(bytesWritten)")
+                            }
+
+
+                        }
+
                     }
                     else
                     {
@@ -313,6 +332,13 @@ struct TunTesterCli: ParsableCommand
                             if let data = connection.read(size: size) {
                                 //print("🔥🍌👇 TCP RX data:")
                                 //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+
+                                if data.count != size
+                                {
+                                    print("🔥 ERROR tried to receive \(size) bytes, instead got \(data.count) bytes")
+                                }
+
+
                                 let bytesWritten = tun.writeBytes(data)
                                 print("🔥😺👆 bytesWritten: \(bytesWritten)")
 
@@ -411,7 +437,24 @@ struct TunTesterCli: ParsableCommand
 
                     if sizeData.count > 2
                     {
-                        print("❄🍌👇 ERROR    TCP RX size byte count wrong, too many bytes")
+                        if sizeData[2] == 0x60 || sizeData[2] == 0x45
+                        {
+                            var sizeDataParsed = sizeData[0..<2]
+                            var dataParsed = sizeData[2..<sizeData.count]
+
+                            guard let sizeUint16 = sizeDataParsed.uint16 else {
+                                return
+                            }
+                            let size = Int(sizeUint16)
+
+                            if size == dataParsed.count
+                            {
+                                let bytesWritten = tun.writeBytes(dataParsed)
+                                print("🔥😺👆 tun write return value: \(bytesWritten)")
+                            }
+
+
+                        }
                     }
                     else
                     {
@@ -437,6 +480,11 @@ struct TunTesterCli: ParsableCommand
                             if let data = connection.read(size: size) {
                                 print("❄🍌👇 TCP RX data:")
                                 _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+
+                                if data.count != size
+                                {
+                                    print("❄ ERROR tried to receive \(size) bytes, instead got \(data.count) bytes")
+                                }
 
                                 let bytesWritten = tun.writeBytes(data)
                                 print("❄😺👆 tun write return value: \(bytesWritten)")
