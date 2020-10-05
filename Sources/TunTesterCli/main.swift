@@ -336,6 +336,8 @@ struct TunTesterCli: ParsableCommand
                                 if data.count != size
                                 {
                                     print("🔥 ERROR tried to receive \(size) bytes, instead got \(data.count) bytes")
+                                    print("🔥 bytes received:")
+                                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                                 }
 
 
@@ -483,7 +485,9 @@ struct TunTesterCli: ParsableCommand
 
                                 if data.count != size
                                 {
-                                    print("❄ ERROR tried to receive \(size) bytes, instead got \(data.count) bytes")
+                                    print("🔥 ERROR tried to receive \(size) bytes, instead got \(data.count) bytes")
+                                    print("🔥 bytes received:")
+                                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                                 }
 
                                 let bytesWritten = tun.writeBytes(data)
