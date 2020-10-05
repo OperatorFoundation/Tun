@@ -219,6 +219,7 @@ public class TunDevice
             return -1
         }
 
+        print("🛠 TunDevice file descriptor: \(tun_fd)")
         var buffer = [UInt8](packet)
         let bytesToWrite = buffer.count
         //print(buffer)
@@ -226,8 +227,9 @@ public class TunDevice
         while totalBytesWritten < bytesToWrite
         {
             let bytesLeft = bytesToWrite - totalBytesWritten
-
-            var choppedBuffer = buffer[totalBytesWritten..<buffer.count]
+            var choppedBuffer = [UInt8](Data(buffer[totalBytesWritten..<buffer.count]))
+            print("🛠 bytesLeft: \(bytesLeft)")
+            //print("🛠 &choppedBuffer \(&choppedBuffer)")
             let writeCount = write(tun_fd, &choppedBuffer, bytesLeft)
             print("🛠 TunDevice: writeCount: \(writeCount)")
             print("🛠 Bytes TunDevice attempted to write:")

@@ -305,12 +305,12 @@ struct TunTesterCli: ParsableCommand
                     {
                         guard let sizeUint16 = sizeData.uint16 else { return }
                         let size = Int(sizeUint16)
-                        print("🔥🍌👇 Server read size: \(size)")
+                        //print("🔥🍌👇 Server read size: \(size)")
                         if let data = connection.read(size: size) {
-                            print("🔥🍌👇 TCP RX data:")
-                            _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                            //print("🔥🍌👇 TCP RX data:")
+                            //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                             let bytesWritten = tun.writeBytes(data)
-                            print("🔥😺👆 bytesWritten: \(bytesWritten)")
+                            //print("🔥😺👆 bytesWritten: \(bytesWritten)")
 
                             if bytesWritten != 0
                             {
@@ -341,8 +341,8 @@ struct TunTesterCli: ParsableCommand
                 {
                     countTUN += 1
                     print("🔥😺👇 Tun Count: \(countTUN)")
-                    print("🔥😺👇 Tun RX data:")
-                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                    //print("🔥😺👇 Tun RX data:")
+                    //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
                     connection.write(data: dataSizeUInt16.data)
@@ -427,11 +427,11 @@ struct TunTesterCli: ParsableCommand
                     let size = Int(sizeUint16)
 
                     if let data = connection.read(size: size) {
-                        print("❄🍌👇 TCP RX data:")
-                        _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                        //print("❄🍌👇 TCP RX data:")
+                        //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
                         let bytesWritten = tun.writeBytes(data)
-                        print("❄😺👆 bytesWritten: \(bytesWritten)")
+                        //print("❄😺👆 bytesWritten: \(bytesWritten)")
 
                         if bytesWritten != 0
                         {
@@ -456,8 +456,8 @@ struct TunTesterCli: ParsableCommand
                     countTUN += 1
                     print("❄😺👇 Tun Count: \(countTUN)")
 
-                    print("❄😺👇 Tun RX data:")
-                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                    //print("❄😺👇 Tun RX data:")
+                    //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
 
                     let dataSize = data.count
                     print("❄🍌👆 Client dataSize: \(dataSize)")
