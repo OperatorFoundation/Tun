@@ -286,48 +286,47 @@ struct TunTesterCli: ParsableCommand
                     print("\n\n🔥🍌👇 Count TCP RX: \(countTCP)")
                     print("🔥🍌👇 sizeData: ")
                     _ = printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false)
-                    if sizeData.count == 0
+
+                    if sizeData.count > 2
                     {
-                        zeroByteCount += 1
+                        print("❄🍌👇 ERROR    TCP RX size byte count wrong, too many bytes")
                     }
                     else
                     {
-                        zeroByteCount = 0
-                    }
 
-                    if zeroByteCount > 1
-                    {
-                        break
-                    }
+                        if sizeData.count == 0 {
+                            zeroByteCount += 1
+                        } else {
+                            zeroByteCount = 0
+                        }
 
-                    if sizeData.count == 2
-                    {
-                        guard let sizeUint16 = sizeData.uint16 else { return }
-                        let size = Int(sizeUint16)
-                        print("🔥🍌👇 received read size: \(size)")
-                        if let data = connection.read(size: size) {
-                            //print("🔥🍌👇 TCP RX data:")
-                            //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-                            let bytesWritten = tun.writeBytes(data)
-                            print("🔥😺👆 bytesWritten: \(bytesWritten)")
+                        if zeroByteCount > 1 {
+                            break
+                        }
 
-                            if bytesWritten != 0
-                            {
-                                tunErrorCount += 1
-                                print("🔥😺👆 error writing to tun. # \(tunErrorCount)")
-                                //break
+                        if sizeData.count == 2 {
+                            guard let sizeUint16 = sizeData.uint16 else {
+                                return
+                            }
+                            let size = Int(sizeUint16)
+                            print("🔥🍌👇 received read size: \(size)")
+                            if let data = connection.read(size: size) {
+                                //print("🔥🍌👇 TCP RX data:")
+                                //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                                let bytesWritten = tun.writeBytes(data)
+                                print("🔥😺👆 bytesWritten: \(bytesWritten)")
+
+                                if bytesWritten != 0 {
+                                    tunErrorCount += 1
+                                    print("🔥😺👆 error writing to tun. # \(tunErrorCount)")
+                                    //break
+                                }
+                            } else {
+                                print("break")
+                                break
+                                abort()
                             }
                         }
-                        else
-                        {
-                            print("break")
-                            break
-                            abort()
-                        }
-                    }
-                    else
-                    {
-                        print("🔥🍌👇 ERROR    TCP RX size byte count wrong, too many bytes")
                     }
 
                 }
@@ -403,53 +402,54 @@ struct TunTesterCli: ParsableCommand
                 while true
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
-                    print("🔥🍌👇 sizeData: ")
+                    print("\n\n❄🍌👇 sizeData: ")
                     _ = printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false)
 
                     countTCP += 1
-                    print("\n\n❄🍌👇 TCP RX count: \(countTCP)")
+                    print("❄🍌👇 TCP RX count: \(countTCP)")
 
-                    if sizeData.count == 0
+
+                    if sizeData.count > 2
                     {
-                        zeroByteCount += 1
+                        print("❄🍌👇 ERROR    TCP RX size byte count wrong, too many bytes")
                     }
                     else
                     {
-                        zeroByteCount = 0
-                    }
 
-                    if zeroByteCount > 1
-                    {
-                        print("break")
-                        break
-                        abort()
-                    }
-                    
-                    if sizeData.count == 2 {
-                        guard let sizeUint16 = sizeData.uint16 else {
-                            return
-                        }
-                        let size = Int(sizeUint16)
-
-                        if let data = connection.read(size: size) {
-                            print("❄🍌👇 TCP RX data:")
-                            _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
-
-                            let bytesWritten = tun.writeBytes(data)
-                            print("❄😺👆 tun write return value: \(bytesWritten)")
-
-                            if bytesWritten != 0 {
-                                tunErrorCount += 1
-                                print("❄😺👆 error writing to tun. # \(tunErrorCount)")
-                                //break
-                            }
+                        if sizeData.count == 0 {
+                            zeroByteCount += 1
                         } else {
-                            break
+                            zeroByteCount = 0
                         }
-                    }
-                    else
-                    {
-                        print("🔥🍌👇 ERROR    TCP RX size byte count wrong, too many bytes")
+
+                        if zeroByteCount > 1 {
+                            print("break")
+                            break
+                            abort()
+                        }
+
+                        if sizeData.count == 2 {
+                            guard let sizeUint16 = sizeData.uint16 else {
+                                return
+                            }
+                            let size = Int(sizeUint16)
+
+                            if let data = connection.read(size: size) {
+                                print("❄🍌👇 TCP RX data:")
+                                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+
+                                let bytesWritten = tun.writeBytes(data)
+                                print("❄😺👆 tun write return value: \(bytesWritten)")
+
+                                if bytesWritten != 0 {
+                                    tunErrorCount += 1
+                                    print("❄😺👆 error writing to tun. # \(tunErrorCount)")
+                                    //break
+                                }
+                            } else {
+                                break
+                            }
+                        }
                     }
 
 
