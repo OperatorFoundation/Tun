@@ -22,7 +22,7 @@ let package = Package(
         .package(url: "https://github.com/OperatorFoundation/Transmission.git", from: "0.1.8"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
         .package(url: "https://github.com/OperatorFoundation/Flower.git", from: "0.1.0"),
-        .package(url: "https://github.com/OperatorFoundation/Routing.git", from: "0.0.1"),
+        .package(url: "https://github.com/OperatorFoundation/Routing.git", from: "0.0.2"),
 
     ],
     targets: [

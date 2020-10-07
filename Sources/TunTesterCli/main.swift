@@ -106,6 +106,10 @@ let packetBytes = Data(array: [
 
 
 
+
+
+
+
 struct TunTesterCli: ParsableCommand
 {
     static var configuration = CommandConfiguration(
@@ -239,6 +243,7 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let tunName = tun.maybeName else { return }
+            setMTU(interface: tunName, mtu: 1380)
             setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
 
             setIPv4Forwarding(setTo: true)
@@ -404,6 +409,7 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let tunName = tun.maybeName else { return }
+            setMTU(interface: tunName, mtu: 1380)
             setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
 
             setIPv4Forwarding(setTo: true)
