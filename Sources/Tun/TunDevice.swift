@@ -231,7 +231,7 @@ public class TunDevice
             //print("🛠 bytesLeft: \(bytesLeft)")
             //print("🛠 &choppedBuffer \(&choppedBuffer)")
             let writeCount = write(tun_fd, &choppedBuffer, bytesLeft)
-            print("🛠 write's returned value: \(writeCount)")
+            //print("🛠 write's returned value: \(writeCount)")
             //print("🛠 Bytes TunDevice attempted to write:")
             //printDataBytes(bytes: Data(choppedBuffer), hexDumpFormat: true, seperator: "", decimal: false)
 
@@ -259,7 +259,7 @@ public class TunDevice
 
             } else {
                 totalBytesWritten += writeCount
-                print("🛠 totalBytesWritten: \(totalBytesWritten)")
+                //print("🛠 totalBytesWritten: \(totalBytesWritten)")
             }
         }
 
