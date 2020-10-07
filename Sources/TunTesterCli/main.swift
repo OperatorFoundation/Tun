@@ -96,6 +96,8 @@ func isValidIPv6Address(address: String) -> Bool
     }
 }
 
+
+
 let packetBytes = Data(array: [
     0x45, 0x00, 0x00, 0x54, 0xc1, 0x88, 0x40, 0x00,    0x40, 0x01, 0x54, 0x64, 0x0a, 0x00, 0x08, 0x63,
     0x0a, 0x00, 0x08, 0x5a, 0x08, 0x00, 0x2c, 0x79,    0x49, 0x35, 0x00, 0x05, 0x6e, 0xde, 0x47, 0x5f,
@@ -146,9 +148,11 @@ struct TunTesterCli: ParsableCommand
     @Option(name: [.long], default: "fc00:bbbb:bbbb:bb01::1:1", help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
     var tunAddressOfServerV6: String
 
-
     @Option(name: [.customShort("i"), .long], default: "", help: "Name of the server's network interface that is connected to the internet, eg enp0s5, eth0, wlan0, etc. Required for server mode.")
     var serverInternetInterface: String
+
+    @Option(name: [.short], default: 0, help: "Debug print verbosity level, 0 to 4, 0 = no debug prints, 4 = all debug prints")
+    var debugLevel: Int
 
     func validate() throws
     {
@@ -198,6 +202,14 @@ struct TunTesterCli: ParsableCommand
             {
                 throw ValidationError("'\(connectionAddress)' is not a valid IPv4 address for the connection address.")
             }
+        }
+    }
+
+    func debugPrint(message: String, level: Int)
+    {
+        if level <= debugLevel
+        {
+            print(message)
         }
     }
 
@@ -285,13 +297,13 @@ struct TunTesterCli: ParsableCommand
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
                     countTCP += 1
-                    print("\n\n[S][CHA][RX] TCP packets received \(countTCP)")
-                    print("[S][CHA][RX] sizeData: ")
-                    _ = printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false)
+                    debugPrint(message: "\n\n[S][CHA][RX] TCP packets received \(countTCP)", level: 2)
+                    debugPrint(message: "[S][CHA][RX] sizeData: ", level: 2)
+                    debugPrint(message: printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 1)
 
                     if sizeData.count > 2
                     {
-                        print("[S][CHA][RX] ERROR    TCP RX size byte count wrong, too many bytes")
+                        debugPrint(message: "[S][CHA][RX] ERROR    TCP RX size byte count wrong, too many bytes", level: 1)
                         if sizeData[2] == 0x60 || sizeData[2] == 0x45
                         {
                             var sizeDataParsed = sizeData[0..<2]
@@ -307,8 +319,8 @@ struct TunTesterCli: ParsableCommand
                             {
                                 tunWriteCount += 1
                                 let bytesWritten = tun.writeBytes(dataParsed)
-                                print("[S][TUN][TX] tun packets sent \(tunWriteCount)")
-                                print("[S][TUN][TX] tun write's return value: \(bytesWritten)")
+                                debugPrint(message: "[S][TUN][TX] tun packets sent \(tunWriteCount)", level: 2)
+                                debugPrint(message: "[S][TUN][TX] tun write's return value: \(bytesWritten)", level: 2)
                             }
                         }
                     }
@@ -335,7 +347,7 @@ struct TunTesterCli: ParsableCommand
                                 return
                             }
                             let size = Int(sizeUint16)
-                            print("[S][CHA][RX] received read size: \(size)")
+                            debugPrint(message: "[S][CHA][RX] received read size: \(size)", level: 2)
                             if let data = connection.read(size: size)
                             {
                                 //print("[S][CHA][RX] TCP RX data:")
@@ -343,25 +355,25 @@ struct TunTesterCli: ParsableCommand
 
                                 if data.count != size
                                 {
-                                    print("[S] ERROR tried to receive \(size) bytes, instead got \(data.count) bytes")
-                                    print("[S] bytes received:")
-                                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                                    debugPrint(message: "[S] ERROR tried to receive \(size) bytes, instead got \(data.count) bytes", level: 1)
+                                    debugPrint(message: "[S] bytes received:", level: 1)
+                                    debugPrint(message: printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 1)
                                 }
 
                                 tunWriteCount += 1
                                 let bytesWritten = tun.writeBytes(data)
-                                print("[S][TUN][TX] tun packets sent \(tunWriteCount)")
-                                print("[S][TUN][TX] tun write's return value: \(bytesWritten)")
+                                debugPrint(message: "[S][TUN][TX] tun packets sent \(tunWriteCount)", level: 2)
+                                debugPrint(message: "[S][TUN][TX] tun write's return value: \(bytesWritten)", level: 2)
 
                                 if bytesWritten != 0
                                 {
                                     tunErrorCount += 1
-                                    print("[S][TUN][TX] error writing to tun. # \(tunErrorCount)")
+                                    debugPrint(message: "[S][TUN][TX] error writing to tun. # \(tunErrorCount)", level: 1)
                                 }
                             }
                             else
                             {
-                                print("break")
+                                debugPrint(message: "break", level: 1)
                                 break
                                 abort()
                             }
@@ -377,23 +389,23 @@ struct TunTesterCli: ParsableCommand
                 if let data = tun.read(packetSize: 1500)
                 {
                     countTUN += 1
-                    print("\n\n[S][TUN][RX] tun packets received: \(countTUN)")
+                    debugPrint(message: "\n\n[S][TUN][RX] tun packets received: \(countTUN)", level: 2)
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
 
-                    print("[S][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel")
+                    debugPrint(message: "[S][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel", level: 2)
 
                     let sizeSendResult = connection.write(data: dataSizeUInt16.data)
                     let dataSendResult = connection.write(data: data)
 
                     if !sizeSendResult && !dataSendResult
                     {
-                        print("[S][CHA][TX] Error sending packet over TCP channel")
+                        debugPrint(message: "[S][CHA][TX] Error sending packet over TCP channel", level: 2)
                     }
                     else
                     {
                         countSendTCP += 1
-                        print("[S][CHA][TX] TCP packets sent: \(countSendTCP) ")
+                        debugPrint(message: "[S][CHA][TX] TCP packets sent: \(countSendTCP) ", level: 2)
                     }
                 }
             }
@@ -434,11 +446,11 @@ struct TunTesterCli: ParsableCommand
                 while true
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
-                    print("\n\n[C][CHA][RX] sizeData: ")
-                    _ = printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false)
+                    debugPrint(message: "\n\n[C][CHA][RX] sizeData: ", level: 2)
+                    debugPrint(message: printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
 
                     countTCP += 1
-                    print("[C][CHA][RX] TCP packets received: \(countTCP)")
+                    debugPrint(message: "[C][CHA][RX] TCP packets received: \(countTCP)", level: 2)
 
                     if sizeData.count > 2
                     {
@@ -457,8 +469,8 @@ struct TunTesterCli: ParsableCommand
                             {
                                 tunWriteCount += 1
                                 let bytesWritten = tun.writeBytes(dataParsed)
-                                print("[C][TUN][TX] tun packets sent \(tunWriteCount)")
-                                print("[C][TUN][TX] tun write's return value: \(bytesWritten)")
+                                debugPrint(message: "[C][TUN][TX] tun packets sent \(tunWriteCount)", level: 2)
+                                debugPrint(message: "[C][TUN][TX] tun write's return value: \(bytesWritten)", level: 2)
                             }
                         }
                     }
@@ -476,7 +488,7 @@ struct TunTesterCli: ParsableCommand
 
                         if zeroByteCount > 1
                         {
-                            print("break")
+                            debugPrint(message: "break", level: 1)
                             break
                             abort()
                         }
@@ -490,30 +502,30 @@ struct TunTesterCli: ParsableCommand
 
                             if let data = connection.read(size: size)
                             {
-                                print("[C][CHA][RX] TCP RX data:")
-                                _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                                debugPrint(message: "[C][CHA][RX] TCP RX data:", level: 2)
+                                debugPrint(message: printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
 
                                 if data.count != size
                                 {
-                                    print("[C] ERROR tried to receive \(size) bytes, instead got \(data.count) bytes")
-                                    print("[C] bytes received:")
-                                    _ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                                    debugPrint(message: "[C] ERROR tried to receive \(size) bytes, instead got \(data.count) bytes", level: 1)
+                                    debugPrint(message: "[C] bytes received:", level: 1)
+                                    debugPrint(message: printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 1)
                                 }
 
                                 tunWriteCount += 1
                                 let bytesWritten = tun.writeBytes(data)
-                                print("[C][TUN][TX] tun packets sent \(tunWriteCount)")
-                                print("[C][TUN][TX] tun write's return value: \(bytesWritten)")
+                                debugPrint(message: "[C][TUN][TX] tun packets sent \(tunWriteCount)", level: 2)
+                                debugPrint(message: "[C][TUN][TX] tun write's return value: \(bytesWritten)", level: 2)
 
                                 if bytesWritten != 0
                                 {
                                     tunErrorCount += 1
-                                    print("[C][TUN][TX] error writing to tun. Error count: \(tunErrorCount)")
+                                    debugPrint(message: "[C][TUN][TX] error writing to tun. Error count: \(tunErrorCount)", level: 1)
                                 }
                             }
                             else
                             {
-                                print("break")
+                                debugPrint(message: "break", level: 1)
                                 break
                             }
                         }
@@ -528,21 +540,21 @@ struct TunTesterCli: ParsableCommand
                 if let data = tun.read(packetSize: 1500)
                 {
                     countTUN += 1
-                    print("\n\n[C][TUN][RX] Tun packets received : \(countTUN)")
+                    debugPrint(message: "\n\n[C][TUN][RX] Tun packets received : \(countTUN)", level: 2)
                     let dataSize = data.count
                     let dataSizeUInt16 = UInt16(dataSize)
-                    print("[C][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel")
+                    debugPrint(message: "[C][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel", level: 2)
                     let sizeSendResult = connection.write(data: dataSizeUInt16.data)
                     let dataSendResult = connection.write(data: data)
 
                     if !sizeSendResult && !dataSendResult
                     {
-                        print("[C][CHA][TX] Error sending packet over TCP channel")
+                        debugPrint(message: "[C][CHA][TX] Error sending packet over TCP channel", level: 1)
                     }
                     else
                     {
                         countSendTCP += 1
-                        print("[C][CHA][TX] TCP packets sent: \(countSendTCP) ")
+                        debugPrint(message: "[C][CHA][TX] TCP packets sent: \(countSendTCP) ", level: 2)
                     }
                 }
             }
