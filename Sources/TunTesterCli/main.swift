@@ -408,6 +408,9 @@ struct TunTesterCli: ParsableCommand
                         debugPrint(message: "[S][CHA][TX] TCP packets sent: \(countSendTCP) ", level: 2)
                     }
                 }
+                else {
+                    usleep(1)
+                }
             }
         }
         else //CLIENT
@@ -556,6 +559,9 @@ struct TunTesterCli: ParsableCommand
                         countSendTCP += 1
                         debugPrint(message: "[C][CHA][TX] TCP packets sent: \(countSendTCP) ", level: 2)
                     }
+                }
+                else{
+                    usleep(1)
                 }
             }
         }
