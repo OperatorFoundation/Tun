@@ -299,7 +299,7 @@ struct TunTesterCli: ParsableCommand
                     countTCP += 1
                     debugPrint(message: "\n\n[S][CHA][RX] TCP packets received \(countTCP)", level: 2)
                     debugPrint(message: "[S][CHA][RX] sizeData: ", level: 2)
-                    debugPrint(message: printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 1)
+                    debugPrint(message: printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
 
                     if sizeData.count > 2
                     {
