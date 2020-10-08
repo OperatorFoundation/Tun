@@ -433,9 +433,13 @@ struct TunTesterCli: ParsableCommand
             setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
             print("[C] ipv4 route has been set")
 
+            //FIXME: in routing.swift, add function to set route allowing traffic to vpn server to go over the internet connected interface:
+            //route add 143.110.154.116 gw 10.211.55.1 enp0s5
+
             setClientRouteV6(serverTunAddress: tunAddressOfServerV6, localTunName: tunName)
             print("[C] ipv6 route has been set")
 
+            print("[C][CHA] Connecting to server")
             guard let connection = Connection(host: connectionAddress, port: port) else { return }
             print("[C][CHA] Connection established\n\n")
 
