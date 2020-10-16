@@ -296,6 +296,60 @@ public class TunDevice
     }
 
 
+    public func readReady() -> Int
+    {
+        guard let tun_fd = maybeTun else
+        {
+            print("🛠 problem with tun fd, unable to unwrap")
+            return -1
+        }
+
+        while true
+        {
+            var readFDSet: fd_set = fd_set(__fds_bits: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+            fdZero(&readFDSet)
+            fdSet(maybeTun, set: &readFDSet)
+            let status = select(tun_fd, &readFDSet, nil, nil, nil)
+
+            // Because we only specified 1 FD, we do not need to check on which FD the event was received
+
+            // In case of a timeout
+//            if status == 0 {
+//                return 0
+//            }
+
+            // In case of an error, close the connection
+            if status == -1 {
+                return -1
+            }
+
+            return 1
+        }
+
+
+//        int tunfd, sockfd;
+//
+//        tunfd  = createTunDevice();
+//        sockfd = initUDPServer();
+//
+//        // Enter the main loop
+//        while (1) {
+//            fd_set readFDSet;
+//
+//            FD_ZERO(&readFDSet);
+//            FD_SET(sockfd, &readFDSet);
+//            FD_SET(tunfd, &readFDSet);
+//            select(FD_SETSIZE, &readFDSet, NULL, NULL, NULL);
+//
+//            if (FD_ISSET(tunfd,  &readFDSet)) tunSelected(tunfd, sockfd);
+//            if (FD_ISSET(sockfd, &readFDSet)) socketSelected(tunfd, sockfd);
+//        }
+
+
+
+    }
+
+
     public func read(packetSize: Int) -> Data?
     {
         //print("\n📚  Read called on TUN device. 📚")
@@ -352,4 +406,132 @@ public class TunDevice
 //    }
 
 
+}
+
+/// Replacement for FD_ZERO macro.
+///
+/// - Parameter set: A pointer to a fd_set structure.
+///
+/// - Returns: The set that is opinted at is filled with all zero's.
+public func fdZero(_ set: inout fd_set) {
+    set.__fds_bits = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+}
+
+
+/// Replacement for FD_SET macro
+///
+/// - Parameter fd: A file descriptor that offsets the bit to be set to 1 in the fd_set pointed at by 'set'.
+/// - Parameter set: A pointer to a fd_set structure.
+///
+/// - Returns: The given set is updated in place, with the bit at offset 'fd' set to 1.
+///
+/// - Note: If you receive an EXC_BAD_INSTRUCTION at the mask statement, then most likely the socket was already closed.
+public func fdSet(_ fd: Int32?, set: inout fd_set) {
+
+    if let fd = fd {
+
+        let intOffset = fd / 64
+        let bitOffset = fd % 64
+        let mask: Int = 1 << bitOffset
+
+        switch intOffset {
+        case 0: set.__fds_bits.0 = set.__fds_bits.0 | mask
+        case 1: set.__fds_bits.1 = set.__fds_bits.1 | mask
+        case 2: set.__fds_bits.2 = set.__fds_bits.2 | mask
+        case 3: set.__fds_bits.3 = set.__fds_bits.3 | mask
+        case 4: set.__fds_bits.4 = set.__fds_bits.4 | mask
+        case 5: set.__fds_bits.5 = set.__fds_bits.5 | mask
+        case 6: set.__fds_bits.6 = set.__fds_bits.6 | mask
+        case 7: set.__fds_bits.7 = set.__fds_bits.7 | mask
+        case 8: set.__fds_bits.8 = set.__fds_bits.8 | mask
+        case 9: set.__fds_bits.9 = set.__fds_bits.9 | mask
+        case 10: set.__fds_bits.10 = set.__fds_bits.10 | mask
+        case 11: set.__fds_bits.11 = set.__fds_bits.11 | mask
+        case 12: set.__fds_bits.12 = set.__fds_bits.12 | mask
+        case 13: set.__fds_bits.13 = set.__fds_bits.13 | mask
+        case 14: set.__fds_bits.14 = set.__fds_bits.14 | mask
+        case 15: set.__fds_bits.15 = set.__fds_bits.15 | mask
+        default: break
+        }
+
+
+    }
+}
+
+
+/// Replacement for FD_CLR macro
+///
+/// - Parameter fd: A file descriptor that offsets the bit to be cleared in the fd_set pointed at by 'set'.
+/// - Parameter set: A pointer to a fd_set structure.
+///
+/// - Returns: The given set is updated in place, with the bit at offset 'fd' cleared to 0.
+public func fdClr(_ fd: Int32?, set: inout fd_set) {
+
+    if let fd = fd {
+
+        let intOffset = fd / 64
+        let bitOffset = fd % 64
+        let mask: Int = ~(1 << bitOffset)
+
+        switch intOffset {
+        case 0: set.__fds_bits.0 = set.__fds_bits.0 & mask
+        case 1: set.__fds_bits.1 = set.__fds_bits.1 & mask
+        case 2: set.__fds_bits.2 = set.__fds_bits.2 & mask
+        case 3: set.__fds_bits.3 = set.__fds_bits.3 & mask
+        case 4: set.__fds_bits.4 = set.__fds_bits.4 & mask
+        case 5: set.__fds_bits.5 = set.__fds_bits.5 & mask
+        case 6: set.__fds_bits.6 = set.__fds_bits.6 & mask
+        case 7: set.__fds_bits.7 = set.__fds_bits.7 & mask
+        case 8: set.__fds_bits.8 = set.__fds_bits.8 & mask
+        case 9: set.__fds_bits.9 = set.__fds_bits.9 & mask
+        case 10: set.__fds_bits.10 = set.__fds_bits.10 & mask
+        case 11: set.__fds_bits.11 = set.__fds_bits.11 & mask
+        case 12: set.__fds_bits.12 = set.__fds_bits.12 & mask
+        case 13: set.__fds_bits.13 = set.__fds_bits.13 & mask
+        case 14: set.__fds_bits.14 = set.__fds_bits.14 & mask
+        case 15: set.__fds_bits.15 = set.__fds_bits.15 & mask
+        default: break
+        }
+
+    }
+}
+
+
+/// Replacement for FD_ISSET macro
+///
+/// - Parameter fd: A file descriptor that offsets the bit to be tested in the fd_set pointed at by 'set'.
+/// - Parameter set: A pointer to a fd_set structure.
+///
+/// - Returns: 'true' if the bit at offset 'fd' is 1, 'false' otherwise.
+public func fdIsSet(_ fd: Int32?, set: inout fd_set) -> Bool {
+
+    if let fd = fd {
+
+        let intOffset = fd / 64
+        let bitOffset = fd % 64
+        let mask: Int = 1 << bitOffset
+
+        switch intOffset {
+        case 0: return set.__fds_bits.0 & mask != 0
+        case 1: return set.__fds_bits.1 & mask != 0
+        case 2: return set.__fds_bits.2 & mask != 0
+        case 3: return set.__fds_bits.3 & mask != 0
+        case 4: return set.__fds_bits.4 & mask != 0
+        case 5: return set.__fds_bits.5 & mask != 0
+        case 6: return set.__fds_bits.6 & mask != 0
+        case 7: return set.__fds_bits.7 & mask != 0
+        case 8: return set.__fds_bits.8 & mask != 0
+        case 9: return set.__fds_bits.9 & mask != 0
+        case 10: return set.__fds_bits.10 & mask != 0
+        case 11: return set.__fds_bits.11 & mask != 0
+        case 12: return set.__fds_bits.12 & mask != 0
+        case 13: return set.__fds_bits.13 & mask != 0
+        case 14: return set.__fds_bits.14 & mask != 0
+        case 15: return set.__fds_bits.15 & mask != 0
+        default: return false
+        }
+
+    } else {
+        return false
+    }
 }
