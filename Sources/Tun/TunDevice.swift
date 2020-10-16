@@ -298,6 +298,7 @@ public class TunDevice
 
     public func readReady() -> Int
     {
+        print("entered readReady()")
         guard let tun_fd = maybeTun else
         {
             print("🛠 problem with tun fd, unable to unwrap")
@@ -310,6 +311,7 @@ public class TunDevice
             fdZero(&readFDSet)
             fdSet(maybeTun, set: &readFDSet)
             let status = select(tun_fd, &readFDSet, nil, nil, nil)
+            print("select returned: \(status)")
 
             // Because we only specified 1 FD, we do not need to check on which FD the event was received
 

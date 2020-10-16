@@ -386,9 +386,9 @@ struct TunTesterCli: ParsableCommand
             var countSendTCP = 0
             while true
             {
-
+                debugPrint(message: "wait for ready", level: 2)
                 let read = tun.readReady()
-                print("readReady: \(read)")
+                debugPrint(message: "readReady: \(read)", level: 2)
 
                 if let data = tun.read(packetSize: 1500)
                 {
@@ -548,8 +548,10 @@ struct TunTesterCli: ParsableCommand
             var countSendTCP = 0
             while true
             {
+
+                debugPrint(message: "wait for ready", level: 2)
                 let read = tun.readReady()
-                print("readReady: \(read)")
+                debugPrint(message: "readReady: \(read)", level: 2)
 
                 if let data = tun.read(packetSize: 1500)
                 {
