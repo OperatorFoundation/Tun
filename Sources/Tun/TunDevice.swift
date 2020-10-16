@@ -359,6 +359,7 @@ public class TunDevice
                 
         guard let source = maybeSource else
         {
+            print("source is nil")
             return nil
         }
         
@@ -381,20 +382,24 @@ public class TunDevice
                 }
                 
                 source.cancel()
-                
+                print("error in guard")
                 return nil
             }
 
             guard readCount > 0 else
             {
+                print("readCount <= 0")
                 return nil
             }
 
             let data = Data(bytes: &buffer, count: readCount)
-            
+            print("returning data:")
+            printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
             return (data)
         }
         while error == EAGAIN
+
+        print("outside function")
     }
         
 

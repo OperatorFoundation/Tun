@@ -250,6 +250,7 @@ struct TunTesterCli: ParsableCommand
             print("[S] Mode: server")
             let reader: (Data) -> Void = {
                 data in
+                print("reader")
             }
 
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
@@ -392,6 +393,9 @@ struct TunTesterCli: ParsableCommand
 
                 if let data = tun.read(packetSize: 1500)
                 {
+                    debugPrint(message: "bytes received", level: 2)
+                    debugPrint(message: printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
+
                     countTUN += 1
                     debugPrint(message: "\n\n[S][TUN][RX] tun packets received: \(countTUN)", level: 2)
                     let dataSize = data.count
@@ -413,6 +417,7 @@ struct TunTesterCli: ParsableCommand
                     }
                 }
                 else {
+                    debugPrint(message: "hit delay", level: 2)
                     usleep(1)
                 }
             }
@@ -423,6 +428,7 @@ struct TunTesterCli: ParsableCommand
 
             let reader: (Data) -> Void = {
                 data in
+                print("reader")
             }
 
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
@@ -555,6 +561,9 @@ struct TunTesterCli: ParsableCommand
 
                 if let data = tun.read(packetSize: 1500)
                 {
+                    debugPrint(message: "bytes received", level: 2)
+                    debugPrint(message: printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
+
                     countTUN += 1
                     debugPrint(message: "\n\n[C][TUN][RX] Tun packets received : \(countTUN)", level: 2)
                     let dataSize = data.count
@@ -574,6 +583,7 @@ struct TunTesterCli: ParsableCommand
                     }
                 }
                 else{
+                    debugPrint(message: "hit delay", level: 2)
                     usleep(1)
                 }
             }
