@@ -258,7 +258,7 @@ struct TunTesterCli: ParsableCommand
             var readerConn: Connection?
             let reader: (Data) -> Void = {
                 data in
-                
+
                 readerCount += 1
                 countTUN += 1
                 debugPrint(message: "\n\n[S][TUN][RX] tun packets received: \(countTUN)", level: 2)
@@ -585,40 +585,12 @@ struct TunTesterCli: ParsableCommand
                     }
                 }
             }
-
-            //var countTUN = 0
-            //var countSendTCP = 0
+            
             while true
             {
                 usleep(1)
-//                debugPrint(message: "wait for ready", level: 2)
-//                let read = tun.readReady()
-//                debugPrint(message: "readReady: \(read)", level: 2)
-//
-//                if let data = tun.read(packetSize: 1500)
-//                {
-//                    countTUN += 1
-//                    debugPrint(message: "\n\n[C][TUN][RX] Tun packets received : \(countTUN)", level: 2)
-//                    let dataSize = data.count
-//                    let dataSizeUInt16 = UInt16(dataSize)
-//                    debugPrint(message: "[C][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel", level: 2)
-//                    let sizeSendResult = connection.write(data: dataSizeUInt16.data)
-//                    let dataSendResult = connection.write(data: data)
-//
-//                    if !sizeSendResult && !dataSendResult
-//                    {
-//                        debugPrint(message: "[C][CHA][TX] Error sending packet over TCP channel", level: 1)
-//                    }
-//                    else
-//                    {
-//                        countSendTCP += 1
-//                        debugPrint(message: "[C][CHA][TX] TCP packets sent: \(countSendTCP) ", level: 2)
-//                    }
-//                }
-//                else{
-//                    usleep(1)
-//                }
             }
+
         }
     }
 }
