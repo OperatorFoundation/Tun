@@ -421,8 +421,38 @@ struct TunTesterCli: ParsableCommand
         {
             print("[C] Mode: client")
 
+            var readerCount = 0
+            var readerConn: Connection?
             let reader: (Data) -> Void = {
                 data in
+                readerCount += 1
+
+                var countTUN = 0
+                var countSendTCP = 0
+
+                countTUN += 1
+                debugPrint(message: "\n\n[C][TUN][RX] Tun packets received : \(countTUN)", level: 2)
+                let dataSize = data.count
+                let dataSizeUInt16 = UInt16(dataSize)
+                debugPrint(message: "[C][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel", level: 2)
+
+                if let conn = readerConn {
+
+                    let sizeSendResult = conn.write(data: dataSizeUInt16.data)
+                    let dataSendResult = conn.write(data: data)
+
+                    if !sizeSendResult && !dataSendResult {
+                        debugPrint(message: "[C][CHA][TX] Error sending packet over TCP channel", level: 1)
+                    } else {
+                        countSendTCP += 1
+                        debugPrint(message: "[C][CHA][TX] TCP packets sent: \(countSendTCP) ", level: 2)
+                    }
+                }
+                else
+                {
+                    debugPrint(message: "Problem in reader sending packet over TCP channel", level: 2)
+                }
+
             }
 
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
@@ -445,6 +475,7 @@ struct TunTesterCli: ParsableCommand
 
             print("[C][CHA] Connecting to server")
             guard let connection = Connection(host: connectionAddress, port: port) else { return }
+            readerConn = connection
             print("[C][CHA] Connection established\n\n")
 
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
@@ -548,34 +579,34 @@ struct TunTesterCli: ParsableCommand
             var countSendTCP = 0
             while true
             {
-
-                debugPrint(message: "wait for ready", level: 2)
-                let read = tun.readReady()
-                debugPrint(message: "readReady: \(read)", level: 2)
-
-                if let data = tun.read(packetSize: 1500)
-                {
-                    countTUN += 1
-                    debugPrint(message: "\n\n[C][TUN][RX] Tun packets received : \(countTUN)", level: 2)
-                    let dataSize = data.count
-                    let dataSizeUInt16 = UInt16(dataSize)
-                    debugPrint(message: "[C][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel", level: 2)
-                    let sizeSendResult = connection.write(data: dataSizeUInt16.data)
-                    let dataSendResult = connection.write(data: data)
-
-                    if !sizeSendResult && !dataSendResult
-                    {
-                        debugPrint(message: "[C][CHA][TX] Error sending packet over TCP channel", level: 1)
-                    }
-                    else
-                    {
-                        countSendTCP += 1
-                        debugPrint(message: "[C][CHA][TX] TCP packets sent: \(countSendTCP) ", level: 2)
-                    }
-                }
-                else{
-                    usleep(1)
-                }
+                usleep(1)
+//                debugPrint(message: "wait for ready", level: 2)
+//                let read = tun.readReady()
+//                debugPrint(message: "readReady: \(read)", level: 2)
+//
+//                if let data = tun.read(packetSize: 1500)
+//                {
+//                    countTUN += 1
+//                    debugPrint(message: "\n\n[C][TUN][RX] Tun packets received : \(countTUN)", level: 2)
+//                    let dataSize = data.count
+//                    let dataSizeUInt16 = UInt16(dataSize)
+//                    debugPrint(message: "[C][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel", level: 2)
+//                    let sizeSendResult = connection.write(data: dataSizeUInt16.data)
+//                    let dataSendResult = connection.write(data: data)
+//
+//                    if !sizeSendResult && !dataSendResult
+//                    {
+//                        debugPrint(message: "[C][CHA][TX] Error sending packet over TCP channel", level: 1)
+//                    }
+//                    else
+//                    {
+//                        countSendTCP += 1
+//                        debugPrint(message: "[C][CHA][TX] TCP packets sent: \(countSendTCP) ", level: 2)
+//                    }
+//                }
+//                else{
+//                    usleep(1)
+//                }
             }
         }
     }
