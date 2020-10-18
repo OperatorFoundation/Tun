@@ -359,6 +359,7 @@ public class TunDevice
                 
         guard let source = maybeSource else
         {
+            print("source is nil")
             return nil
         }
         
@@ -372,7 +373,7 @@ public class TunDevice
         {
             let readCount = readv(tunSocket, iovecListPointer.baseAddress, Int32(iovecListPointer.count))
             error = errno
-
+            print("readCount: \(readCount)")
             guard readCount > 0 || error == EAGAIN else
             {
                 if let errorString = String(utf8String: strerror(errno)), readCount < 0
@@ -381,20 +382,24 @@ public class TunDevice
                 }
                 
                 source.cancel()
-                
+                print("error in guard")
                 return nil
             }
 
             guard readCount > 0 else
             {
+                print("readCount <= 0")
                 return nil
             }
 
             let data = Data(bytes: &buffer, count: readCount)
-            
+            print("returning data:")
+            //printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
             return (data)
         }
         while error == EAGAIN
+
+        print("outside function")
     }
         
 
