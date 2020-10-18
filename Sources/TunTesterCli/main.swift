@@ -258,13 +258,13 @@ struct TunTesterCli: ParsableCommand
             var readerConn: Connection?
             let reader: (Data) -> Void = {
                 data in
-
-                debugPrint(message: "bytes received", level: 2)
-                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
-
+                
                 readerCount += 1
                 countTUN += 1
                 debugPrint(message: "\n\n[S][TUN][RX] tun packets received: \(countTUN)", level: 2)
+                debugPrint(message: "[S][TUN][RX] bytes received", level: 2)
+                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
+
                 let dataSize = data.count
                 let dataSizeUInt16 = UInt16(dataSize)
 
@@ -318,7 +318,9 @@ struct TunTesterCli: ParsableCommand
             guard let listener = Listener(port: port) else { return }
             print("[S][CHA] Listening for client")
             guard let connection = listener.accept() else { return }
+            readerConn = connection
             print("[S][CHA] Connection established\n\n")
+
 
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
             networkToTunQueue.async
@@ -416,44 +418,11 @@ struct TunTesterCli: ParsableCommand
                 }
             }
 
-            //var countTUN = 0
-            //var countSendTCP = 0
+
             while true
             {
                 usleep(1)
-//                debugPrint(message: "wait for ready", level: 2)
-//                let read = tun.readReady()
-//                debugPrint(message: "readReady: \(read)", level: 2)
-//
-//                if let data = tun.read(packetSize: 1500)
-//                {
-//                    debugPrint(message: "bytes received", level: 2)
-//                    debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
-//
-//                    countTUN += 1
-//                    debugPrint(message: "\n\n[S][TUN][RX] tun packets received: \(countTUN)", level: 2)
-//                    let dataSize = data.count
-//                    let dataSizeUInt16 = UInt16(dataSize)
-//
-//                    debugPrint(message: "[S][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel", level: 2)
-//
-//                    let sizeSendResult = connection.write(data: dataSizeUInt16.data)
-//                    let dataSendResult = connection.write(data: data)
-//
-//                    if !sizeSendResult && !dataSendResult
-//                    {
-//                        debugPrint(message: "[S][CHA][TX] Error sending packet over TCP channel", level: 2)
-//                    }
-//                    else
-//                    {
-//                        countSendTCP += 1
-//                        debugPrint(message: "[S][CHA][TX] TCP packets sent: \(countSendTCP) ", level: 2)
-//                    }
-//                }
-//                else {
-//                    debugPrint(message: "hit delay", level: 2)
-//                    usleep(1)
-//                }
+
             }
         }
         else //CLIENT
