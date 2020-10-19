@@ -278,8 +278,8 @@ struct TunTesterCli: ParsableCommand
                 readerCount += 1
                 countTUN += 1
                 debugPrint(message: "[S][TUN][RX] tun packets received: \(countTUN)", level: 2, color: .green)
-                debugPrint(message: "[S][TUN][RX] bytes received", level: 2, color: .green)
-                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2, color: .green)
+                debugPrint(message: "[S][TUN][RX] bytes received", level: 3, color: .green)
+                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 3, color: .green)
 
                 let dataSize = data.count
                 let dataSizeUInt16 = UInt16(dataSize)
@@ -349,8 +349,8 @@ struct TunTesterCli: ParsableCommand
                     guard let sizeData = connection.read(size: 2) else { return }
                     countTCP += 1
                     debugPrint(message: "[S][CHA][RX] TCP packets received \(countTCP)", level: 2, color: .blue)
-                    debugPrint(message: "[S][CHA][RX] sizeData: ", level: 2, color: .blue)
-                    debugPrint(message: "\n" + printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2, color: .blue)
+                    debugPrint(message: "[S][CHA][RX] sizeData: ", level: 3, color: .blue)
+                    debugPrint(message: "\n" + printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 3, color: .blue)
 
                     if sizeData.count > 2
                     {
@@ -402,8 +402,8 @@ struct TunTesterCli: ParsableCommand
                             debugPrint(message: "[S][CHA][RX] received read size: \(size)", level: 2, color: .blue)
                             if let data = connection.read(size: size)
                             {
-                                debugPrint(message: "[S][CHA][RX] TCP RX data:", level: 2, color: .blue)
-                                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2, color: .blue)
+                                debugPrint(message: "[S][CHA][RX] TCP RX data:", level: 3, color: .blue)
+                                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 3, color: .blue)
 
                                 if data.count != size
                                 {
@@ -451,8 +451,8 @@ struct TunTesterCli: ParsableCommand
                 readerCount += 1
                 countTUN += 1
                 debugPrint(message: "[C][TUN][RX] Tun packets received : \(countTUN)", level: 2, color: .green)
-                debugPrint(message: "bytes received", level: 2, color: .green)
-                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2, color: .green)
+                debugPrint(message: "bytes received", level: 3, color: .green)
+                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 3, color: .green)
 
                 let dataSize = data.count
                 let dataSizeUInt16 = UInt16(dataSize)
@@ -514,8 +514,8 @@ struct TunTesterCli: ParsableCommand
                     guard let sizeData = connection.read(size: 2) else { return }
                     countTCP += 1
                     debugPrint(message: "[C][CHA][RX] TCP packets received: \(countTCP)", level: 2, color: .blue)
-                    debugPrint(message: "[C][CHA][RX] sizeData: ", level: 2, color: .blue)
-                    debugPrint(message: "\n" + printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2, color: .blue)
+                    debugPrint(message: "[C][CHA][RX] sizeData: ", level: 3, color: .blue)
+                    debugPrint(message: "\n" + printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 3, color: .blue)
 
                     if sizeData.count > 2
                     {
@@ -567,8 +567,8 @@ struct TunTesterCli: ParsableCommand
                             debugPrint(message: "[C][CHA][RX] received read size: \(size)", level: 2, color: .blue)
                             if let data = connection.read(size: size)
                             {
-                                debugPrint(message: "[C][CHA][RX] TCP RX data:", level: 2, color: .blue)
-                                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2, color: .blue)
+                                debugPrint(message: "[C][CHA][RX] TCP RX data:", level: 3, color: .blue)
+                                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 3, color: .blue)
 
                                 if data.count != size
                                 {
