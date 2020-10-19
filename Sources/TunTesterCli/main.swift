@@ -148,8 +148,8 @@ struct TunTesterCli: ParsableCommand
     @Option(name: [.long], default: "fc00:bbbb:bbbb:bb01::1:1", help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
     var tunAddressOfServerV6: String
 
-    @Option(name: [.customShort("i"), .long], default: "", help: "Name of the server's network interface that is connected to the internet, eg enp0s5, eth0, wlan0, etc. Required for server mode.")
-    var serverInternetInterface: String
+    @Option(name: [.customShort("i"), .long], help: "Name of the network interface that is connected to the internet, eg enp0s5, eth0, wlan0, etc. Required for client and server mode.")
+    var internetInterface: String
 
     @Option(name: [.short], default: 0, help: "Debug print verbosity level, 0 to 4, 0 = no debug prints, 4 = all debug prints")
     var debugLevel: Int
@@ -174,29 +174,27 @@ struct TunTesterCli: ParsableCommand
             throw ValidationError("'\(localTunAddress)' is not a valid IPv4 address for the local tun interface.")
         }
 
-        if serverMode
+        if internetInterface != ""
         {
-            if serverInternetInterface != ""
-            {
-                if serverInternetInterface.range(of: #"^([[:digit:][:lower:]]{1,8})$"#, options: .regularExpression) == nil {
-                    throw ValidationError("'\(serverInternetInterface)' does not appear to be a valid interface name.")
-                }
-                else
-                {
-                    let fileManager = FileManager()
-                    let path = "/sys/class/net/" + serverInternetInterface
-                    if !fileManager.fileExists(atPath: path)
-                    {
-                        throw ValidationError("'\(serverInternetInterface)' interface does not seem to exist (\(path)).")
-                    }
-                }
+            if internetInterface.range(of: #"^([[:digit:][:lower:]]{1,8})$"#, options: .regularExpression) == nil {
+                throw ValidationError("'\(internetInterface)' does not appear to be a valid interface name.")
             }
             else
             {
-                throw ValidationError("Server internet interface is required when running server mode.")
+                let fileManager = FileManager()
+                let path = "/sys/class/net/" + internetInterface
+                if !fileManager.fileExists(atPath: path)
+                {
+                    throw ValidationError("'\(internetInterface)' interface does not seem to exist (\(path)).")
+                }
             }
         }
         else
+        {
+            throw ValidationError("Server internet interface is required when running server mode.")
+        }
+
+        if !serverMode
         {
             if !isValidIPv4Address(address: connectionAddress) // tun address of server to connect to
             {
@@ -295,24 +293,24 @@ struct TunTesterCli: ParsableCommand
             setIPv4Forwarding(setTo: true)
             setIPv6Forwarding(setTo: true)
 
-            print("[S] Deleting all ipv4 NAT entries for \(serverInternetInterface)")
+            print("[S] Deleting all ipv4 NAT entries for \(internetInterface)")
             var result4 = false
             while !result4
             {
-                result4 = deleteServerNAT(serverPublicInterface: serverInternetInterface)
+                result4 = deleteServerNAT(serverPublicInterface: internetInterface)
             }
 
-            print("[S] Deleting all ipv6 NAT entries for \(serverInternetInterface)")
+            print("[S] Deleting all ipv6 NAT entries for \(internetInterface)")
             var result6 = false
             while !result6
             {
-                result6 = deleteServerNATv6(serverPublicInterface: serverInternetInterface)
+                result6 = deleteServerNATv6(serverPublicInterface: internetInterface)
             }
 
-            configServerNAT(serverPublicInterface: serverInternetInterface)
+            configServerNAT(serverPublicInterface: internetInterface)
             print("[S] Current ipv4 NAT: \n\n\(getNAT())\n\n")
 
-            configServerNATv6(serverPublicInterface: serverInternetInterface)
+            configServerNATv6(serverPublicInterface: internetInterface)
             print("[S] Current ipv6 NAT: \n\n\(getNATv6())\n\n")
 
             guard let listener = Listener(port: port) else { return }
@@ -320,7 +318,6 @@ struct TunTesterCli: ParsableCommand
             guard let connection = listener.accept() else { return }
             readerConn = connection
             print("[S][CHA] Connection established\n\n")
-
 
             let networkToTunQueue = DispatchQueue(label: "networkToTunQueue")
             networkToTunQueue.async
@@ -349,8 +346,8 @@ struct TunTesterCli: ParsableCommand
                             {
                                 return
                             }
-                            let size = Int(sizeUint16)
 
+                            let size = Int(sizeUint16)
                             if size == dataParsed.count
                             {
                                 tunWriteCount += 1
@@ -386,8 +383,8 @@ struct TunTesterCli: ParsableCommand
                             debugPrint(message: "[S][CHA][RX] received read size: \(size)", level: 2)
                             if let data = connection.read(size: size)
                             {
-                                //print("[S][CHA][RX] TCP RX data:")
-                                //_ = printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
+                                debugPrint(message: "[S][CHA][RX] TCP RX data:", level: 2)
+                                debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
 
                                 if data.count != size
                                 {
@@ -411,18 +408,14 @@ struct TunTesterCli: ParsableCommand
                             {
                                 debugPrint(message: "break", level: 1)
                                 break
-                                abort()
                             }
                         }
                     }
                 }
             }
-
-
             while true
             {
                 usleep(1)
-
             }
         }
         else //CLIENT
@@ -438,17 +431,15 @@ struct TunTesterCli: ParsableCommand
 
                 readerCount += 1
                 countTUN += 1
-
+                debugPrint(message: "\n\n[C][TUN][RX] Tun packets received : \(countTUN)", level: 2)
                 debugPrint(message: "bytes received", level: 2)
                 debugPrint(message: "\n" + printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
 
-                debugPrint(message: "\n\n[C][TUN][RX] Tun packets received : \(countTUN)", level: 2)
                 let dataSize = data.count
                 let dataSizeUInt16 = UInt16(dataSize)
+
                 debugPrint(message: "[C][CHA][TX] sending \(dataSizeUInt16) bytes over TCP channel", level: 2)
-
                 if let conn = readerConn {
-
                     let sizeSendResult = conn.write(data: dataSizeUInt16.data)
                     let dataSendResult = conn.write(data: data)
 
@@ -463,7 +454,6 @@ struct TunTesterCli: ParsableCommand
                 {
                     debugPrint(message: "Problem in reader sending packet over TCP channel", level: 2)
                 }
-
             }
 
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
@@ -474,14 +464,18 @@ struct TunTesterCli: ParsableCommand
 
             setIPv4Forwarding(setTo: true)
             setIPv6Forwarding(setTo: true)
+            //setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
+            setClientRoute(destinationAddress: "default", gatewayAddress: tunAddressOfServer, interfaceName: tunName)
+            setClientRoute(destinationAddress: connectionAddress, gatewayAddress: "_default", interfaceName: internetInterface)
 
-            setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
+
             print("[C] ipv4 route has been set")
 
             //FIXME: in routing.swift, add function to set route allowing traffic to vpn server to go over the internet connected interface:
             //route add 143.110.154.116 gw 10.211.55.1 enp0s5
 
-            setClientRouteV6(serverTunAddress: tunAddressOfServerV6, localTunName: tunName)
+            //setClientRouteV6(serverTunAddress: tunAddressOfServerV6, localTunName: tunName)
+            setClientRouteV6(destinationAddress: "default", gatewayAddress: "", interfaceName: tunName)
             print("[C] ipv6 route has been set")
 
             print("[C][CHA] Connecting to server")
@@ -499,14 +493,14 @@ struct TunTesterCli: ParsableCommand
                 while true
                 {
                     guard let sizeData = connection.read(size: 2) else { return }
+                    countTCP += 1
+                    debugPrint(message: "[C][CHA][RX] TCP packets received: \(countTCP)", level: 2)
                     debugPrint(message: "\n\n[C][CHA][RX] sizeData: ", level: 2)
                     debugPrint(message: "\n" + printDataBytes(bytes: sizeData, hexDumpFormat: true, seperator: "", decimal: false, enablePrinting: false), level: 2)
 
-                    countTCP += 1
-                    debugPrint(message: "[C][CHA][RX] TCP packets received: \(countTCP)", level: 2)
-
                     if sizeData.count > 2
                     {
+                        debugPrint(message: "[S][CHA][RX] ERROR    TCP RX size byte count wrong, too many bytes", level: 1)
                         if sizeData[2] == 0x60 || sizeData[2] == 0x45
                         {
                             var sizeDataParsed = sizeData[0..<2]
@@ -529,7 +523,6 @@ struct TunTesterCli: ParsableCommand
                     }
                     else
                     {
-
                         if sizeData.count == 0
                         {
                             zeroByteCount += 1
@@ -543,16 +536,16 @@ struct TunTesterCli: ParsableCommand
                         {
                             debugPrint(message: "break", level: 1)
                             break
-                            abort()
                         }
 
                         if sizeData.count == 2
                         {
-                            guard let sizeUint16 = sizeData.uint16 else {
+                            guard let sizeUint16 = sizeData.uint16 else
+                            {
                                 return
                             }
                             let size = Int(sizeUint16)
-
+                            debugPrint(message: "[C][CHA][RX] received read size: \(size)", level: 2)
                             if let data = connection.read(size: size)
                             {
                                 debugPrint(message: "[C][CHA][RX] TCP RX data:", level: 2)
@@ -585,7 +578,6 @@ struct TunTesterCli: ParsableCommand
                     }
                 }
             }
-            
             while true
             {
                 usleep(1)

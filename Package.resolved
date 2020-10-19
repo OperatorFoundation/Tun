@@ -69,8 +69,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Routing.git",
         "state": {
           "branch": null,
-          "revision": "15da85db0647a2e373c0678d5da70f1f4e409766",
-          "version": "0.0.2"
+          "revision": "6abf51c84610f602a5eebdc45376f978876191f0",
+          "version": "0.0.3"
         }
       },
       {
