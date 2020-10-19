@@ -234,7 +234,7 @@ struct TunTesterCli: ParsableCommand
 
     func run() throws
     {
-        debugPrint(message: "Sleeping 2 seconds to allow debugger to attach to process...", level: 0, color: .red)
+        debugPrint(message: "Sleeping 2 seconds to allow debugger to attach to process...", level: 0, color: .yellow)
         sleep(2)
 
         debugPrint(message: "Hello, Operator.", level: 0)
@@ -388,6 +388,7 @@ struct TunTesterCli: ParsableCommand
 
                         if zeroByteCount > 1
                         {
+                            debugPrint(message: "[S][CHA] break 1\n\n", level: 1, color: .yellow)
                             break
                         }
 
@@ -424,7 +425,7 @@ struct TunTesterCli: ParsableCommand
                             }
                             else
                             {
-                                debugPrint(message: "break\n\n", level: 1, color: .yellow)
+                                debugPrint(message: "[S][CHA] break 2\n\n", level: 1, color: .yellow)
                                 break
                             }
                         }
@@ -552,7 +553,7 @@ struct TunTesterCli: ParsableCommand
 
                         if zeroByteCount > 1
                         {
-                            debugPrint(message: "break\n\n", level: 1)
+                            debugPrint(message: "[C][CHA] break 1\n\n", level: 1, color: .yellow)
                             break
                         }
 
@@ -589,7 +590,7 @@ struct TunTesterCli: ParsableCommand
                             }
                             else
                             {
-                                debugPrint(message: "break\n\n", level: 1)
+                                debugPrint(message: "[C][CHA] break 2\n\n", level: 1, color: .yellow)
                                 break
                             }
                         }
