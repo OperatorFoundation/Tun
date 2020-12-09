@@ -263,7 +263,7 @@ public class TunDevice
             }
         }
 
-        return 0
+        return totalBytesWritten
     }
 
 
