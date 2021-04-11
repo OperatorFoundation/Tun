@@ -1,4 +1,4 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.3
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -19,7 +19,7 @@ let package = Package(
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.0.2"),
         .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "1.1.0"),
-        .package(url: "https://github.com/OperatorFoundation/Transmission.git", from: "0.1.8"),
+        .package(url: "https://github.com/OperatorFoundation/TransmissionLinux.git", from: "0.2.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
         .package(url: "https://github.com/OperatorFoundation/Flower.git", from: "0.1.0"),
         .package(url: "https://github.com/OperatorFoundation/Routing.git", from: "0.0.4"),
@@ -35,11 +35,21 @@ let package = Package(
             name: "Tun",
             dependencies: ["Datable", "TunC", "Routing"]),
         .target(
-            name: "TunTesterCli",
-            dependencies: ["Tun", "Routing", "Flower", .product(name: "TransmissionLinux", package: "Transmission"), .product(name: "ArgumentParser", package: "swift-argument-parser")]),
+		name: "TunTesterCli",
+		dependencies:
+		[
+			"Tun",
+			"Routing",
+			"Flower",
+			.product(name: "TransmissionLinux", package: "TransmissionLinux", condition: .when(platforms: [.linux])),
+			.product(name: "ArgumentParser", package: "swift-argument-parser")
+		]
+	),
         .testTarget(
-            name: "TunTests",
-            dependencies: ["Tun", "InternetProtocols"]),
+		name: "TunTests",
+		dependencies: ["Tun", "InternetProtocols"],
+		exclude: ["Tun-Package.xctestplan"]
+	),
     ],
     swiftLanguageVersions: [.v5]
 )

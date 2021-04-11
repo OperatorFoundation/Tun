@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Bits.git",
         "state": {
           "branch": null,
-          "revision": "d6bdf981268cae74ac670b07b27602ac35fee77f",
-          "version": "1.0.5"
+          "revision": "e53451b5858a8a2d72f51d3ca22761643adf64d3",
+          "version": "1.0.6"
         }
       },
       {
@@ -33,8 +33,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Datable.git",
         "state": {
           "branch": null,
-          "revision": "1c23f2b72d0d0cf4386fad05f8a5db4b91e8d304",
-          "version": "3.0.2"
+          "revision": "aff3113e993217cae43180df9286eaa481682cce",
+          "version": "3.0.4"
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/InternetProtocols.git",
         "state": {
           "branch": null,
-          "revision": "07f3ef27293905aa34a3d031a581b4e610bd12b6",
-          "version": "1.0.9"
+          "revision": "8bd874cec7172fc441cf639108787725957e82c0",
+          "version": "1.1.1"
         }
       },
       {
@@ -101,12 +101,12 @@
         }
       },
       {
-        "package": "Transmission",
-        "repositoryURL": "https://github.com/OperatorFoundation/Transmission.git",
+        "package": "TransmissionLinux",
+        "repositoryURL": "https://github.com/OperatorFoundation/TransmissionLinux.git",
         "state": {
           "branch": null,
-          "revision": "6bc35ce511e668e0ee77ec3b1ebb4aed0692ceb2",
-          "version": "0.1.8"
+          "revision": "6a3778f07d4597eb38ac5102ca99807353173c39",
+          "version": "0.2.0"
         }
       },
       {
