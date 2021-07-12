@@ -312,11 +312,8 @@ struct TunTesterCli: ParsableCommand
             setIPv6Forwarding(setTo: true)
 
             debugPrint(message: "[S] Deleting all ipv4 NAT entries for \(internetInterface)", level: 0)
-            var result4 = false
-            while !result4
-            {
-                result4 = deleteServerNAT(serverPublicInterface: internetInterface)
-            }
+            while deleteServerNAT(serverPublicInterface: internetInterface) {}
+            
 
             debugPrint(message: "[S] Deleting all ipv6 NAT entries for \(internetInterface)", level: 0)
             var result6 = false
