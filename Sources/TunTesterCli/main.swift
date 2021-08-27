@@ -495,7 +495,7 @@ struct TunTesterCli: ParsableCommand
             debugPrint(message: "[C] ipv6 route has been set", level: 0)
 
             debugPrint(message: "[C][CHA] Connecting to server", level: 0, color: .blue)
-            guard let connection = Connection(host: connectionAddress, port: port) else { return }
+            guard let connection = TransmissionLinux.Connection(host: connectionAddress, port: port) else { return }
             readerConn = connection
             debugPrint(message: "[C][CHA] Connection established\n\n", level: 0, color: .blue)
 
@@ -527,7 +527,7 @@ struct TunTesterCli: ParsableCommand
                                 return
                             }
 
-                            let size = Int(sizeUint16)
+                            let size = Int(_builtinIntegerLiteral: sizeUint16)
                             if size == dataParsed.count
                             {
                                 tunWriteCount += 1
@@ -560,7 +560,7 @@ struct TunTesterCli: ParsableCommand
                             {
                                 return
                             }
-                            let size = Int(sizeUint16)
+                            let size = Int(_builtinIntegerLiteral: sizeUint16)
                             debugPrint(message: "[C][CHA][RX] received read size: \(size)", level: 2, color: .blue)
                             if let data = connection.read(size: size)
                             {
