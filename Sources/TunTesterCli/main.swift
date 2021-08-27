@@ -527,7 +527,7 @@ struct TunTesterCli: ParsableCommand
                                 return
                             }
 
-                            let size = Int(_builtinIntegerLiteral: sizeUint16)
+                            let size = Int(sizeUint16)
                             if size == dataParsed.count
                             {
                                 tunWriteCount += 1
@@ -560,7 +560,7 @@ struct TunTesterCli: ParsableCommand
                             {
                                 return
                             }
-                            let size = Int(_builtinIntegerLiteral: sizeUint16)
+                            let size = Int(sizeUint16)
                             debugPrint(message: "[C][CHA][RX] received read size: \(size)", level: 2, color: .blue)
                             if let data = connection.read(size: size)
                             {
