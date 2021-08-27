@@ -20,7 +20,7 @@ let package = Package(
         .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.0.4"),
         .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "1.1.2"),
         .package(url: "https://github.com/OperatorFoundation/TransmissionLinux.git", from: "0.3.2"),
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.3"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.4"),
         .package(url: "https://github.com/OperatorFoundation/Flower.git", from: "0.1.3"),
         .package(url: "https://github.com/OperatorFoundation/Routing.git", from: "0.0.5"),
 
