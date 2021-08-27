@@ -120,10 +120,10 @@ struct TunTesterCli: ParsableCommand
                         TunTesterCli can be invoked as either a server or a client. The client/server connection is TCP and forwards packets received on the tun interface over the TCP tunnel
 
                         Server Example:
-                            sudo ./.build/debug/TunTesterCli -s -c 10.37.132.4 -i enp0s5
+                            sudo ./run.sh -s -c 10.37.132.4 -i enp0s5
 
                         Client Example:
-                            sudo ./.build/debug/TunTesterCli -c 10.37.132.4
+                            sudo ./run.sh -c 10.37.132.4
 
                         """)
 
