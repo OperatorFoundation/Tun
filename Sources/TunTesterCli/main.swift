@@ -130,28 +130,28 @@ struct TunTesterCli: ParsableCommand
     @Flag(name: [.short, .long], help: "If the server flag is set (i.e. -s or --server-mode) then TunTesterCli will run in server mode, if flag is omitted then it will run in client mode.")
     var serverMode = false
 
-    @Option(name: [.short, .long], wrappedValue: "127.0.0.1", help: "The IPv4 address. If server mode then it is the IP address to listen on, if client mode then it is the IP addrees of the server to connect to.") //fix with better examples
+    @Option(wrappedValue: "127.0.0.1", name: [.short, .long], help: "The IPv4 address. If server mode then it is the IP address to listen on, if client mode then it is the IP addrees of the server to connect to.") //fix with better examples
     var connectionAddress: String
 
-    @Option(name: [.short, .customLong("port")], wrappedValue: 5555, help: "The TCP port. If server mode then it is the TCP port to listen on, if client mode then it is the TCP port of the server to connect to.") //fix with better examples
+    @Option(wrappedValue: 5555, name: [.short, .customLong("port")], help: "The TCP port. If server mode then it is the TCP port to listen on, if client mode then it is the TCP port of the server to connect to.") //fix with better examples
     var port: Int
 
-    @Option(name: [.short, .long], wrappedValue: "", help: "The IPv4 address assigned to the local tun interface in server or client mode. (default: in server mode 10.4.2.1, client mode 10.4.2.100)") //fix with better examples
+    @Option(wrappedValue: "", name: [.short, .long], help: "The IPv4 address assigned to the local tun interface in server or client mode. (default: in server mode 10.4.2.1, client mode 10.4.2.100)") //fix with better examples
     var localTunAddress: String
 
-    @Option(name: [.short, .long], wrappedValue: "10.4.2.1", help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
+    @Option(wrappedValue: "10.4.2.1", name: [.short, .long], help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
     var tunAddressOfServer: String
 
-    @Option(name: [.long], wrappedValue: "", help: "The IPv4 address assigned to the local tun interface in server or client mode. (default: in server mode fc00:bbbb:bbbb:bb01::1:1, client mode fc00:bbbb:bbbb:bb01::1:b)") //fix with better examples
+    @Option(wrappedValue: "", name: [.long], help: "The IPv4 address assigned to the local tun interface in server or client mode. (default: in server mode fc00:bbbb:bbbb:bb01::1:1, client mode fc00:bbbb:bbbb:bb01::1:b)") //fix with better examples
     var localTunAddressV6: String
 
-    @Option(name: [.long], wrappedValue: "fc00:bbbb:bbbb:bb01::1:1", help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
+    @Option(wrappedValue: "fc00:bbbb:bbbb:bb01::1:1", name: [.long], help: "The IPv4 address assigned to the server's tun interface, required for client mode.") //fix with better examples
     var tunAddressOfServerV6: String
 
     @Option(name: [.customShort("i"), .long], help: "Name of the network interface that is connected to the internet, eg enp0s5, eth0, wlan0, etc. Required for client and server mode.")
     var internetInterface: String
 
-    @Option(name: [.short], wrappedValue: 0, help: "Debug print verbosity level, 0 to 4, 0 = no debug prints, 4 = all debug prints")
+    @Option(wrappedValue: 0, name: [.short], help: "Debug print verbosity level, 0 to 4, 0 = no debug prints, 4 = all debug prints")
     var debugLevel: Int
 
     func validate() throws
