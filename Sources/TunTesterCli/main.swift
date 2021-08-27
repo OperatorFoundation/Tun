@@ -495,7 +495,7 @@ struct TunTesterCli: ParsableCommand
             debugPrint(message: "[C] ipv6 route has been set", level: 0)
 
             debugPrint(message: "[C][CHA] Connecting to server", level: 0, color: .blue)
-            guard let connection = TransmissionLinux.Connection(host: connectionAddress, port: port) else { return }
+            guard let connection = SocketConnection(host: connectionAddress, port: port) else { return }
             readerConn = connection
             debugPrint(message: "[C][CHA] Connection established\n\n", level: 0, color: .blue)
 
