@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Bits.git",
         "state": {
           "branch": null,
-          "revision": "e53451b5858a8a2d72f51d3ca22761643adf64d3",
-          "version": "1.0.6"
+          "revision": "fbd93d6609b2846c3b47f523b860ce4919ff9694",
+          "version": "1.1.0"
         }
       },
       {
@@ -33,8 +33,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Datable.git",
         "state": {
           "branch": null,
-          "revision": "aff3113e993217cae43180df9286eaa481682cce",
-          "version": "3.0.4"
+          "revision": "31b055da961f794f1a2ce01b5521ee650815a9c9",
+          "version": "3.0.6"
         }
       },
       {
@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Flower.git",
         "state": {
           "branch": null,
-          "revision": "706f17032226ba2d050626d5217adbb1df989950",
-          "version": "0.1.3"
+          "revision": "39af634ada5522fd3be9e49c3dc72a9c52d8fd84",
+          "version": "0.1.16"
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/InternetProtocols.git",
         "state": {
           "branch": null,
-          "revision": "3db1b3e98c9b24342c5b7b5bcfbc560dffc699d9",
-          "version": "1.1.2"
+          "revision": "b4b62dae65e28161f4236356663a32cb3cb40ccf",
+          "version": "1.1.3"
         }
       },
       {
@@ -60,8 +60,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Routing.git",
         "state": {
           "branch": null,
-          "revision": "6524d1a0f79916953b08f038067b54b686c1ed84",
-          "version": "0.0.5"
+          "revision": "f2f7d2c710be92efb6e1282196d5edb0cdb002e1",
+          "version": "0.0.8"
         }
       },
       {
@@ -71,6 +71,15 @@
           "branch": null,
           "revision": "83b23d940471b313427da226196661856f6ba3e0",
           "version": "0.4.4"
+        }
+      },
+      {
+        "package": "swift-log",
+        "repositoryURL": "https://github.com/apple/swift-log",
+        "state": {
+          "branch": null,
+          "revision": "5d66f7ba25daf4f94100e7022febf3c75e37a6c7",
+          "version": "1.4.2"
         }
       },
       {
@@ -87,8 +96,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/TransmissionLinux.git",
         "state": {
           "branch": null,
-          "revision": "1222c1b845e09c526f0c2433ff892f5243496f9a",
-          "version": "0.3.2"
+          "revision": "c4bf79cc482d7f040737fc4556cf6ad857f6f3af",
+          "version": "0.3.3"
         }
       },
       {
