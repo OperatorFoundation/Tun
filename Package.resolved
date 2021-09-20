@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Bits.git",
         "state": {
           "branch": null,
-          "revision": "fbd93d6609b2846c3b47f523b860ce4919ff9694",
-          "version": "1.1.0"
+          "revision": "cab8d3cdaa94afcb8d84a4e641676b6ac171183b",
+          "version": "2.0.0"
         }
       },
       {
@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Flower.git",
         "state": {
           "branch": null,
-          "revision": "39af634ada5522fd3be9e49c3dc72a9c52d8fd84",
-          "version": "0.1.16"
+          "revision": "e4fae511bb9496738efe450fc688bbe1da3baef0",
+          "version": "0.1.17"
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/InternetProtocols.git",
         "state": {
           "branch": null,
-          "revision": "b4b62dae65e28161f4236356663a32cb3cb40ccf",
-          "version": "1.1.3"
+          "revision": "62afad2579f2432e736b8971c3505ac302694dcc",
+          "version": "2.0.0"
         }
       },
       {
@@ -60,8 +60,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Routing.git",
         "state": {
           "branch": null,
-          "revision": "f2f7d2c710be92efb6e1282196d5edb0cdb002e1",
-          "version": "0.0.8"
+          "revision": "a8edf18b493cf0428c031100b7f189dc0e035750",
+          "version": "0.0.9"
         }
       },
       {
@@ -96,8 +96,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/TransmissionLinux.git",
         "state": {
           "branch": null,
-          "revision": "c4bf79cc482d7f040737fc4556cf6ad857f6f3af",
-          "version": "0.3.3"
+          "revision": "dbdf83754debc109a4d548a9252a4f6c89a068df",
+          "version": "0.3.4"
         }
       },
       {
@@ -105,8 +105,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Transport",
         "state": {
           "branch": null,
-          "revision": "b5ac00eac45a2e57923540c1fd80c734fe160ffe",
-          "version": "2.3.5"
+          "revision": "91dca4e691a9d2a6d38acd9b6dd64a1240da85f1",
+          "version": "2.3.6"
         }
       }
     ]
