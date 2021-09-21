@@ -33,8 +33,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/Datable.git",
         "state": {
           "branch": null,
-          "revision": "31b055da961f794f1a2ce01b5521ee650815a9c9",
-          "version": "3.0.6"
+          "revision": "2f5d672662ce143a9e2067af21d144a5864cc3e7",
+          "version": "3.1.0"
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/OperatorFoundation/InternetProtocols.git",
         "state": {
           "branch": null,
-          "revision": "62afad2579f2432e736b8971c3505ac302694dcc",
-          "version": "2.0.0"
+          "revision": "5ea737f6b74b2bcf964386d9baa455d7de3f8e4e",
+          "version": "2.1.0"
         }
       },
       {

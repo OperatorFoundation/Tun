@@ -17,8 +17,8 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.0.6"),
-        .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "2.0.0"),
+        .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.1.0"),
+        .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "2.1.0"),
         .package(url: "https://github.com/OperatorFoundation/TransmissionLinux.git", from: "0.3.4"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.4"),
         .package(url: "https://github.com/OperatorFoundation/Flower.git", from: "0.1.17"),
