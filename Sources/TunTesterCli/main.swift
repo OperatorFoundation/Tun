@@ -2,7 +2,7 @@ import Foundation
 import Tun
 import ArgumentParser
 import Dispatch
-import TransmissionLinux
+import Transmission
 import Datable
 import Flower
 import Routing

@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "Tun",
-    platforms: [.macOS(.v11)],
+    platforms: [.macOS(.v10_15)],
     products: [
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
         
@@ -19,9 +19,9 @@ let package = Package(
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/OperatorFoundation/Datable.git", from: "3.1.0"),
         .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "2.1.0"),
-        .package(url: "https://github.com/OperatorFoundation/TransmissionLinux.git", from: "0.3.4"),
+        .package(url: "https://github.com/OperatorFoundation/Transmission.git", from: "1.0.1"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.4"),
-        .package(url: "https://github.com/OperatorFoundation/Flower.git", from: "0.1.17"),
+        .package(url: "https://github.com/OperatorFoundation/Flower.git", from: "2.0.2"),
         .package(url: "https://github.com/OperatorFoundation/Routing.git", from: "0.0.9"),
 
     ],
@@ -41,7 +41,7 @@ let package = Package(
 			"Tun",
 			"Routing",
 			"Flower",
-			.product(name: "TransmissionLinux", package: "TransmissionLinux", condition: .when(platforms: [.linux])),
+			.product(name: "Transmission", package: "Transmission", condition: .when(platforms: [.linux])),
 			.product(name: "ArgumentParser", package: "swift-argument-parser")
 		]
 	),
