@@ -20,7 +20,7 @@ let package = Package(
         .package(url: "https://github.com/OperatorFoundation/Datable.git", branch: "main"),
         .package(url: "https://github.com/OperatorFoundation/InternetProtocols.git", from: "2.1.0"),
         .package(url: "https://github.com/OperatorFoundation/Transmission.git", from: "1.0.1"),
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.4"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.2"),
         .package(url: "https://github.com/OperatorFoundation/Flower.git", from: "2.0.2"),
         .package(url: "https://github.com/OperatorFoundation/Routing.git", branch: "main"),
 
@@ -34,7 +34,7 @@ let package = Package(
         .target(
             name: "Tun",
             dependencies: ["Datable", "TunC", "Routing"]),
-        .target(
+        .executableTarget(
 		name: "TunTesterCli",
 		dependencies:
 		[
