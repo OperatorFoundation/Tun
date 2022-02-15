@@ -235,7 +235,8 @@ public class TunDevice
             //print("🛠 Bytes TunDevice attempted to write:")
             //printDataBytes(bytes: Data(choppedBuffer), hexDumpFormat: true, seperator: "", decimal: false)
 
-            if writeCount < 0 {
+            if writeCount < 0
+            {
                 let errorString = String(cString: strerror(errno))
                 print("🛠 Got an error while writing to tun: \(errorString)")
                 print("🛠 errno: \(errno)")
@@ -244,10 +245,10 @@ public class TunDevice
                 print("🛠 bytes attempted to write:")
                 printDataBytes(bytes: Data(choppedBuffer), hexDumpFormat: true, seperator: "", decimal: false)
 
-                if errno != EAGAIN
+                if errno == EAGAIN
                 {
                     print("🛠 EAGAIN")
-                    return -1
+                    return writeBytes(packet)
                 }
                 else if errno == EINVAL
                 {
@@ -256,8 +257,13 @@ public class TunDevice
                         print("🛠 File descriptor invalid!!")
                     }
                 }
-
-            } else {
+                else
+                {
+                    return -1
+                }
+            }
+            else
+            {
                 totalBytesWritten += writeCount
                 //print("🛠 totalBytesWritten: \(totalBytesWritten)")
             }
