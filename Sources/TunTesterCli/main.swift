@@ -342,7 +342,8 @@ struct TunTesterCli: ParsableCommand
             sleep(1)
             // Test writing to tun
             
-            
+            let natString = getNAT()
+            print("This is the NAT: \n\(natString)")
             guard let listener = Transmission.TransmissionListener(port: port, logger: nil) else
             { return }
             
