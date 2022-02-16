@@ -52,9 +52,11 @@ final class TunTests: XCTestCase
         let hexToSend = "4500004000004000400600007f0000017f000001c40d13ad6d4e7ed500000000b002fffffe34000002043fd8010303060101080a175fb6580000000004020000"
         let dataToSend = hexToSend.hexadecimal!
         
-        tun.writeBytes(dataToSend)
+        let write1 = tun.writeBytes(dataToSend)
+        print("First write result: \(write1)")
         sleep(1)
-        tun.writeBytes(dataToSend)
+        let write2 = tun.writeBytes(dataToSend)
+        print("Second write result: \(write2)")
         sleep(1)
         tun.writeBytes(dataToSend)
         sleep(1)
