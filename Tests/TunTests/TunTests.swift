@@ -19,7 +19,7 @@ final class TunTests: XCTestCase
          */
         print("Sleeping 2 seconds to allow debugger to attach to process...")
         sleep(2)
-        let destinationAddress: Data = Data(array: [161,35,13,201])
+        //let destinationAddress: Data = Data(array: [161,35,13,201])
         
         
         let address = "10.2.0.1"
@@ -28,13 +28,13 @@ final class TunTests: XCTestCase
         
         var packetCount = 0
         
-        let reader: (Data, UInt32) -> Void =
+        let reader: (Data) -> Void =
         {
-            data, protocolNumber in
+            data in
             
             packetCount += 1
             print("packet count: \(packetCount)")
-            print("protocolNumber: \(protocolNumber)")
+            //print("protocolNumber: \(protocolNumber)")
             print("Number of bytes: \(data.count)")
             print("Data: ")
             //printDataBytes(bytes: data, hexDumpFormat: true, seperator: "", decimal: false)
