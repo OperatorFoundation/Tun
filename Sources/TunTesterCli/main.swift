@@ -1,4 +1,5 @@
 import Foundation
+
 import Tun
 import ArgumentParser
 import Dispatch
@@ -305,11 +306,11 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let tunName = tun.maybeName else { return }
-            setMTU(interface: tunName, mtu: 1380)
-            setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
+            let _ = setMTU(interface: tunName, mtu: 1380)
+            let _ = setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
 
-            setIPv4Forwarding(setTo: true)
-            setIPv6Forwarding(setTo: true)
+            let _ = setIPv4Forwarding(setTo: true)
+            let _ = setIPv6Forwarding(setTo: true)
 
             debugPrint(message: "[S] Deleting all ipv4 NAT entries for \(internetInterface)", level: 0)
             while deleteServerNAT(serverPublicInterface: internetInterface) {}
@@ -322,10 +323,10 @@ struct TunTesterCli: ParsableCommand
                 result6 = deleteServerNATv6(serverPublicInterface: internetInterface)
             }
 
-            configServerNAT(serverPublicInterface: internetInterface)
+            let _ = configServerNAT(serverPublicInterface: internetInterface)
             debugPrint(message: "[S] Current ipv4 NAT: \n\n\(getNAT())\n\n", level: 0)
 
-            configServerNATv6(serverPublicInterface: internetInterface)
+            let _ = configServerNATv6(serverPublicInterface: internetInterface)
             debugPrint(message: "[S] Current ipv6 NAT: \n\n\(getNATv6())\n\n", level: 1)
 
             guard let listener = Listener(port: port) else { return }
@@ -357,7 +358,7 @@ struct TunTesterCli: ParsableCommand
                             var sizeDataParsed = sizeData[0..<2]
                             var dataParsed = sizeData[2..<sizeData.count]
 
-                            guard let sizeUint16 = sizeDataParsed.uint16 else
+                            guard let sizeUint16: UInt16 = sizeDataParsed.uint16 else
                             {
                                 return
                             }
@@ -391,7 +392,7 @@ struct TunTesterCli: ParsableCommand
 
                         if sizeData.count == 2
                         {
-                            guard let sizeUint16 = sizeData.uint16 else
+                            guard let sizeUint16: UInt16 = sizeData.uint16 else
                             {
                                 return
                             }
@@ -475,14 +476,14 @@ struct TunTesterCli: ParsableCommand
             guard let tun  = TunDevice(address: tunA, reader: reader) else { return }
 
             guard let tunName = tun.maybeName else { return }
-            setMTU(interface: tunName, mtu: 1380)
-            setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
+            let _ = setMTU(interface: tunName, mtu: 1380)
+            let _ = setAddressV6(interfaceName: tunName, addressString: tunAv6, subnetPrefix: 64)
 
-            setIPv4Forwarding(setTo: true)
-            setIPv6Forwarding(setTo: true)
+            let _ = setIPv4Forwarding(setTo: true)
+            let _ = setIPv6Forwarding(setTo: true)
             //setClientRoute(serverTunAddress: tunAddressOfServer, localTunName: tunName)
-            setClientRoute(destinationAddress: "default", gatewayAddress: tunAddressOfServer, interfaceName: tunName)
-            setClientRoute(destinationAddress: connectionAddress, gatewayAddress: "_default", interfaceName: internetInterface)
+            let _ = setClientRoute(destinationAddress: "default", gatewayAddress: tunAddressOfServer, interfaceName: tunName)
+            let _ = setClientRoute(destinationAddress: connectionAddress, gatewayAddress: "_default", interfaceName: internetInterface)
 
 
             debugPrint(message: "[C] ipv4 route has been set", level: 0)
@@ -491,7 +492,7 @@ struct TunTesterCli: ParsableCommand
             //route add 143.110.154.116 gw 10.211.55.1 enp0s5
 
             //setClientRouteV6(serverTunAddress: tunAddressOfServerV6, localTunName: tunName)
-            setClientRouteV6(destinationAddress: "default", gatewayAddress: "", interfaceName: tunName)
+            let _ = setClientRouteV6(destinationAddress: "default", gatewayAddress: "", interfaceName: tunName)
             debugPrint(message: "[C] ipv6 route has been set", level: 0)
 
             debugPrint(message: "[C][CHA] Connecting to server", level: 0, color: .blue)
@@ -522,7 +523,7 @@ struct TunTesterCli: ParsableCommand
                             var sizeDataParsed = sizeData[0..<2]
                             var dataParsed = sizeData[2..<sizeData.count]
 
-                            guard let sizeUint16 = sizeDataParsed.uint16 else
+                            guard let sizeUint16: UInt16 = sizeDataParsed.uint16 else
                             {
                                 return
                             }
@@ -556,7 +557,7 @@ struct TunTesterCli: ParsableCommand
 
                         if sizeData.count == 2
                         {
-                            guard let sizeUint16 = sizeData.uint16 else
+                            guard let sizeUint16: UInt16 = sizeData.uint16 else
                             {
                                 return
                             }
