@@ -339,7 +339,7 @@ struct TunTesterCli: ParsableCommand
            // printDataBytes(bytes: dataToSend, hexDumpFormat: true, separator: "", decimal: false)
             let writeResult = tun.writeBytes(dataToSend)
             print("✍️ Wrote \(dataToSend.count) bytes to tun. Write result is: \(writeResult)")
-            sleep(1)
+            sleep(10)
             // Test writing to tun
             
             let natString = getNAT()
