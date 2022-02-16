@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 
 import Tun
 import ArgumentParser
@@ -154,7 +155,7 @@ struct TunTesterCli: ParsableCommand
 
     @Option(wrappedValue: 0, name: [.short], help: "Debug print verbosity level, 0 to 4, 0 = no debug prints, 4 = all debug prints")
     var debugLevel: Int
-
+    
     func validate() throws
     {
         //basic validation of parameters
@@ -329,9 +330,9 @@ struct TunTesterCli: ParsableCommand
             let _ = configServerNATv6(serverPublicInterface: internetInterface)
             debugPrint(message: "[S] Current ipv6 NAT: \n\n\(getNATv6())\n\n", level: 1)
 
-            guard let listener = Listener(port: port) else { return }
+            guard let listener = Transmission.TransmissionListener(port: port, logger: nil) else { return }
             debugPrint(message: "[S][CHA] Listening for client", level: 0, color: .blue)
-            guard let connection = listener.accept() else { return }
+            let connection = listener.accept()
             readerConn = connection
             debugPrint(message: "[S][CHA] Connection established\n\n", level: 0, color: .blue)
 
@@ -355,8 +356,8 @@ struct TunTesterCli: ParsableCommand
                         debugPrint(message: "[S][CHA][RX] ERROR    TCP RX size byte count wrong, too many bytes\n\n", level: 1, color: .red)
                         if sizeData[2] == 0x60 || sizeData[2] == 0x45
                         {
-                            var sizeDataParsed = sizeData[0..<2]
-                            var dataParsed = sizeData[2..<sizeData.count]
+                            let sizeDataParsed = sizeData[0..<2]
+                            let dataParsed = sizeData[2..<sizeData.count]
 
                             guard let sizeUint16: UInt16 = sizeDataParsed.uint16 else
                             {
@@ -496,7 +497,7 @@ struct TunTesterCli: ParsableCommand
             debugPrint(message: "[C] ipv6 route has been set", level: 0)
 
             debugPrint(message: "[C][CHA] Connecting to server", level: 0, color: .blue)
-            guard let connection = SocketConnection(host: connectionAddress, port: port) else { return }
+            guard let connection = Transmission.TransmissionConnection(host: connectionAddress, port: port) else { return }
             readerConn = connection
             debugPrint(message: "[C][CHA] Connection established\n\n", level: 0, color: .blue)
 
@@ -520,8 +521,8 @@ struct TunTesterCli: ParsableCommand
                         debugPrint(message: "[S][CHA][RX] ERROR    TCP RX size byte count wrong, too many bytes\n\n", level: 1, color: .red)
                         if sizeData[2] == 0x60 || sizeData[2] == 0x45
                         {
-                            var sizeDataParsed = sizeData[0..<2]
-                            var dataParsed = sizeData[2..<sizeData.count]
+                            let sizeDataParsed = sizeData[0..<2]
+                            let dataParsed = sizeData[2..<sizeData.count]
 
                             guard let sizeUint16: UInt16 = sizeDataParsed.uint16 else
                             {
