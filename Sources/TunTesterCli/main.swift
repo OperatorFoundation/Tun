@@ -329,14 +329,19 @@ struct TunTesterCli: ParsableCommand
 
             let _ = configServerNATv6(serverPublicInterface: internetInterface)
             debugPrint(message: "[S] Current ipv6 NAT: \n\n\(getNATv6())\n\n", level: 1)
+            
+            
 
+            // Test writing to tun
             let hexToSend = "4500004000004000400600007f0000017f000001c40d13ad6d4e7ed500000000b002fffffe34000002043fd8010303060101080a175fb6580000000004020000"
             let dataToSend = hexToSend.hexadecimal!
             
            // printDataBytes(bytes: dataToSend, hexDumpFormat: true, separator: "", decimal: false)
             let writeResult = tun.writeBytes(dataToSend)
-            print("✍️ Wrote \(dataToSend.count) bytes to tun. Write result is :\(writeResult)")
+            print("✍️ Wrote \(dataToSend.count) bytes to tun. Write result is: \(writeResult)")
             sleep(1)
+            // Test writing to tun
+            
             
             guard let listener = Transmission.TransmissionListener(port: port, logger: nil) else
             { return }
