@@ -330,7 +330,16 @@ struct TunTesterCli: ParsableCommand
             let _ = configServerNATv6(serverPublicInterface: internetInterface)
             debugPrint(message: "[S] Current ipv6 NAT: \n\n\(getNATv6())\n\n", level: 1)
 
-            guard let listener = Transmission.TransmissionListener(port: port, logger: nil) else { return }
+            let hexToSend = "4500004000004000400600007f0000017f000001c40d13ad6d4e7ed500000000b002fffffe34000002043fd8010303060101080a175fb6580000000004020000"
+            let dataToSend = hexToSend.hexadecimal!
+            
+           // printDataBytes(bytes: dataToSend, hexDumpFormat: true, separator: "", decimal: false)
+            tun.writeBytes(dataToSend)
+            sleep(1)
+            
+            guard let listener = Transmission.TransmissionListener(port: port, logger: nil) else
+            { return }
+            
             debugPrint(message: "[S][CHA] Listening for client", level: 0, color: .blue)
             let connection = listener.accept()
             readerConn = connection
@@ -607,4 +616,23 @@ struct TunTesterCli: ParsableCommand
 
 TunTesterCli.main()
 RunLoop.current.run()
+
+extension String
+{
+    var hexadecimal: Data?
+    {
+        var data = Data(capacity: count / 2)
+        
+        let regex = try! NSRegularExpression(pattern: "[0-9a-f]{1,2}", options: .caseInsensitive)
+        regex.enumerateMatches(in: self, range: NSRange(startIndex..., in: self)) { match, _, _ in
+            let byteString = (self as NSString).substring(with: match!.range)
+            let num = UInt8(byteString, radix: 16)!
+            data.append(num)
+        }
+        
+        guard data.count > 0 else { return nil }
+        
+        return data
+    }
+}
 

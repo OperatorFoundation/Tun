@@ -57,7 +57,7 @@ final class TunTests: XCTestCase
         let hexToSend = "4500004000004000400600007f0000017f000001c40d13ad6d4e7ed500000000b002fffffe34000002043fd8010303060101080a175fb6580000000004020000"
         let dataToSend = hexToSend.hexadecimal!
         
-       // printDataBytes(bytes: dataToSend, hexDumpFormat: true, seperator: "", decimal: false)
+       // printDataBytes(bytes: dataToSend, hexDumpFormat: true, separator: "", decimal: false)
         tun.writeBytes(dataToSend)
         sleep(1)
         tun.writeBytes(dataToSend)
