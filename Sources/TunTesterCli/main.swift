@@ -334,7 +334,8 @@ struct TunTesterCli: ParsableCommand
             let dataToSend = hexToSend.hexadecimal!
             
            // printDataBytes(bytes: dataToSend, hexDumpFormat: true, separator: "", decimal: false)
-            tun.writeBytes(dataToSend)
+            let writeResult = tun.writeBytes(dataToSend)
+            print("✍️ Wrote \(dataToSend.count) bytes to tun. Write result is :\(writeResult)")
             sleep(1)
             
             guard let listener = Transmission.TransmissionListener(port: port, logger: nil) else
